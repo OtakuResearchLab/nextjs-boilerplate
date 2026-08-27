@@ -177,7 +177,8 @@ export default async function Home() {
                     </span>
                   )}
                 </div>
-
+                </Link>
+                
                 <div className="p-4 md:p-5">
                   <div className="mb-2 flex flex-wrap gap-2 text-[11px]">
                     {product.ip && (
@@ -201,9 +202,10 @@ export default async function Home() {
                     )}
                   </div>
 
-                  <h3 className="line-clamp-2 min-h-[48px] font-bold leading-6">
-                    {product.name}
-                  </h3>
+                  <Link href={`/products/${product.id}`}>
+                    <h3 className="line-clamp-2 min-h-[48px] font-bold leading-6 transition hover:text-[#52799a]">
+                      {product.name}
+                    </h3>
                   </Link>
                   {product.category && (
                     <p className="mt-1 text-xs text-[#8b989f]">
