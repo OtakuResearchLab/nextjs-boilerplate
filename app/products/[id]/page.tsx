@@ -65,9 +65,9 @@ export default async function ProductPage({
         <div className="grid gap-10 md:grid-cols-2">
           {/* 商品圖片 */}
           <div className="overflow-hidden rounded-[28px] bg-white shadow-sm">
-            {product.image_url ? (
+            {product.images?.[0] ? (
               <img
-                src={product.image_url}
+                src={product.images[0]}
                 alt={product.name ?? "商品圖片"}
                 className="h-auto w-full object-cover"
               />
@@ -114,9 +114,9 @@ export default async function ProductPage({
               </div>
             )}
 
-            {product.buy_url && (
+            {product.myship_url && (
               <a
-                href={product.buy_url}
+                href={product.myship_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-8 flex h-14 w-full items-center justify-center rounded-full bg-[#314f63] px-6 text-base font-bold text-white transition hover:opacity-85"
