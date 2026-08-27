@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -156,6 +157,7 @@ export default async function Home() {
                 key={product.id}
                 className="group overflow-hidden rounded-[22px] border border-[#dedbd5] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#60798c]/10"
               >
+              <Link href={`/products/${product.id}`} className="block">
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#e9edf0]">
                   {product.images?.[0] ? (
                     <img
@@ -202,7 +204,7 @@ export default async function Home() {
                   <h3 className="line-clamp-2 min-h-[48px] font-bold leading-6">
                     {product.name}
                   </h3>
-
+                  </Link>
                   {product.category && (
                     <p className="mt-1 text-xs text-[#8b989f]">
                       {product.category}
