@@ -36,13 +36,13 @@ export default function ProductGallery({
   };
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 space-y-3">
       {/* 主圖片 */}
-      <div className="group relative flex min-h-[500px] items-center justify-center overflow-hidden rounded-[28px] bg-white p-3 shadow-sm">
+      <div className="group relative flex min-h-[420px] max-h-[600px] items-center justify-center overflow-hidden rounded-[28px] bg-white p-3 shadow-sm">
         <img
           src={selectedImage}
           alt={`${productName} 商品圖片 ${selectedIndex + 1}`}
-          className="max-h-[720px] w-full object-contain"
+          className="max-h-[580px] w-full object-contain"
         />
 
         {/* 左右切換按鈕 */}
@@ -67,32 +67,7 @@ export default function ProductGallery({
             </button>
           </>
         )}
-    {/* 縮圖 */}
-    {images.length > 1 && (
-      <div className="flex flex-wrap gap-2">
-        {images.map((image, index) => (
-          <button
-            key={`${image}-${index}`}
-            type="button"
-            onClick={() => setSelectedIndex(index)}
-            className={`h-[92px] w-[92px] shrink-0 overflow-hidden rounded-xl border-2 bg-white p-1 transition ${
-              selectedIndex === index
-               ? "border-[#314f63]"
-               : "border-transparent hover:border-[#b9c7d0]"
-             }`}
-             aria-label={`查看第 ${index + 1} 張商品圖片`}
-            >
-              <div className="h-full w-full overflow-hidden rounded-lg bg-[#f1efea]">
-                <img
-                  src={image}
-                  alt={`${productName} 縮圖 ${index + 1}`}
-                  className="h-full w-full object-cover"
-               />
-              </div>
-            </button>
-          ))}
-        </div>
-       )}
+
         {/* 圖片編號 */}
         {images.length > 1 && (
           <div className="absolute bottom-4 right-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
@@ -101,7 +76,32 @@ export default function ProductGallery({
         )}
       </div>
 
-      
+      {/* 縮圖 */}
+      {images.length > 1 && (
+        <div className="grid grid-cols-5 gap-2">
+          {images.map((image, index) => (
+            <button
+              key={`${image}-${index}`}
+              type="button"
+              onClick={() => setSelectedIndex(index)}
+              className={`aspect-square w-full overflow-hidden rounded-xl border-2 bg-white p-1 transition ${
+                selectedIndex === index
+                  ? "border-[#314f63]"
+                  : "border-transparent hover:border-[#b9c7d0]"
+              }`}
+              aria-label={`查看第 ${index + 1} 張商品圖片`}
+            >
+              <div className="h-full w-full overflow-hidden rounded-lg bg-[#f1efea]">
+                <img
+                  src={image}
+                  alt={`${productName} 縮圖 ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
