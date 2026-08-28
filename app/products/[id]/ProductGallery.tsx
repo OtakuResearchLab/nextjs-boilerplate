@@ -16,7 +16,7 @@ export default function ProductGallery({
 
   if (!images || images.length === 0) {
     return (
-      <div className="flex aspect-square items-center justify-center rounded-[28px] bg-[#e9e6df] text-[#8c8c8c]">
+      <div className="flex h-[560px] items-center justify-center rounded-[28px] bg-[#e9e6df] text-[#8c8c8c]">
         暫無商品圖片
       </div>
     );
@@ -52,24 +52,22 @@ export default function ProductGallery({
 
   return (
     <div className="min-w-0 space-y-3">
-      {/* 主圖片 */}
-      <div className="group relative overflow-hidden rounded-[24px] bg-white p-2 shadow-sm">
-        <div className="flex items-center justify-center">
-          <img
-            src={selectedImage}
-            alt={`${productName} 商品圖片 ${selectedIndex + 1}`}
-            className="max-h-[520px] w-auto max-w-full object-contain"
-          />
-        </div>
+      {/* 固定尺寸主圖片區 */}
+      <div className="group relative flex h-[560px] items-center justify-center overflow-hidden rounded-[28px] bg-white p-4 shadow-sm">
+        <img
+          src={selectedImage}
+          alt={`${productName} 商品圖片 ${selectedIndex + 1}`}
+          className="max-h-full max-w-full object-contain"
+        />
 
-        {/* 主圖片左右切換 */}
+        {/* 主圖左右切換 */}
         {images.length > 1 && (
           <>
             <button
               type="button"
               onClick={showPrevious}
               aria-label="上一張商品圖片"
-              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
+              className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
             >
               ‹
             </button>
@@ -78,7 +76,7 @@ export default function ProductGallery({
               type="button"
               onClick={showNext}
               aria-label="下一張商品圖片"
-              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
+              className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
             >
               ›
             </button>
@@ -87,7 +85,7 @@ export default function ProductGallery({
 
         {/* 圖片編號 */}
         {images.length > 1 && (
-          <div className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+          <div className="absolute bottom-4 right-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
             {selectedIndex + 1} / {images.length}
           </div>
         )}
@@ -96,7 +94,6 @@ export default function ProductGallery({
       {/* 縮圖列 */}
       {images.length > 1 && (
         <div className="relative">
-          {/* 縮圖左移 */}
           {images.length > 5 && (
             <button
               type="button"
@@ -137,7 +134,6 @@ export default function ProductGallery({
             </div>
           </div>
 
-          {/* 縮圖右移 */}
           {images.length > 5 && (
             <button
               type="button"
