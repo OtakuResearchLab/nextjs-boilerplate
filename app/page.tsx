@@ -8,7 +8,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    ip?: string | string[];
+  }>;
+}) {
   const { data: products, error } = await supabase
     .from("products")
     .select("*")
@@ -27,30 +33,47 @@ export default async function Home() {
     );
   }
 
+  const allProducts = products ?? [];
+
   const ipList = [
     "全部",
     ...Array.from(
       new Set(
-        (products ?? [])
+        allProducts
           .map((product) => product.ip)
-          .filter(Boolean)
+          .filter((ip): ip is string => Boolean(ip))
       )
     ),
   ];
+
+  const params = await searchParams;
+  const requestedIp =
+    typeof params.ip === "string" && params.ip.length > 0
+      ? params.ip
+      : "全部";
+
+  const selectedIp = ipList.includes(requestedIp)
+    ? requestedIp
+    : "全部";
+
+  const filteredProducts =
+    selectedIp === "全部"
+      ? allProducts
+      : allProducts.filter((product) => product.ip === selectedIp);
 
   return (
     <main className="min-h-screen bg-[#f7f5f1] text-[#263746]">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#dedbd5] bg-[#f7f5f1]/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <div>
+          <Link href="/" className="block">
             <h1 className="text-2xl font-black tracking-wider">
               宅研所
             </h1>
             <p className="text-[11px] tracking-[0.28em] text-[#7890a3]">
               OTAKU LAB
             </p>
-          </div>
+          </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium md:flex">
             <a href="#products" className="hover:text-[#6e91ad]">
@@ -112,19 +135,35 @@ export default async function Home() {
             <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
               CATEGORY
             </p>
-            <h2 className="mt-1 text-2xl font-black">熱門分類</h2>
+            <h2 className="mt-1 text-2xl font-black">
+              熱門分類
+            </h2>
           </div>
         </div>
 
         <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
-          {ipList.map((ip) => (
-            <button
-              key={ip}
-              className="shrink-0 rounded-full border border-[#d7d6d1] bg-white px-5 py-2.5 text-sm font-medium transition hover:border-[#92aabd] hover:bg-[#eef3f6]"
-            >
-              {ip}
-            </button>
-          ))}
+          {ipList.map((ip) => {
+            const isSelected = selectedIp === ip;
+
+            const href =
+              ip === "全部"
+                ? "/#products"
+                : `/?ip=${encodeURIComponent(ip)}#products`;
+
+            return (
+              <Link
+                key={ip}
+                href={href}
+                className={`shrink-0 rounded-full border px-5 py-2.5 text-sm font-medium transition ${
+                  isSelected
+                    ? "border-[#344b5e] bg-[#344b5e] text-white"
+                    : "border-[#d7d6d1] bg-white hover:border-[#92aabd] hover:bg-[#eef3f6]"
+                }`}
+              >
+                {ip}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -138,47 +177,55 @@ export default async function Home() {
             <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
               NEW ARRIVALS
             </p>
-            <h2 className="mt-1 text-2xl font-black">最新商品</h2>
+
+            <h2 className="mt-1 text-2xl font-black">
+              {selectedIp === "全部"
+                ? "最新商品"
+                : selectedIp}
+            </h2>
           </div>
 
           <span className="text-sm text-[#7890a3]">
-            共 {products?.length ?? 0} 件
+            共 {filteredProducts.length} 件
           </span>
         </div>
 
-        {!products || products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center text-[#8797a2]">
-            目前沒有上架商品。
+            此分類目前沒有上架商品。
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <article
                 key={product.id}
                 className="group overflow-hidden rounded-[22px] border border-[#dedbd5] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#60798c]/10"
               >
-              <Link href={`/products/${product.id}`} className="block">
-                <div className="relative aspect-[4/5] overflow-hidden bg-[#e9edf0]">
-                  {product.images?.[0] ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.name ?? "商品圖片"}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-[#9aa9b3]">
-                      No Image
-                    </div>
-                  )}
+                <Link
+                  href={`/products/${product.id}`}
+                  className="block"
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#e9edf0]">
+                    {product.images?.[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name ?? "商品圖片"}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-[#9aa9b3]">
+                        No Image
+                      </div>
+                    )}
 
-                  {product.featured && (
-                    <span className="absolute left-3 top-3 rounded-full bg-[#d68674] px-3 py-1 text-[11px] font-bold text-white">
-                      PICK
-                    </span>
-                  )}
-                </div>
+                    {product.featured && (
+                      <span className="absolute left-3 top-3 rounded-full bg-[#d68674] px-3 py-1 text-[11px] font-bold text-white">
+                        PICK
+                      </span>
+                    )}
+                  </div>
                 </Link>
-                
+
                 <div className="p-4 md:p-5">
                   <div className="mb-2 flex flex-wrap gap-2 text-[11px]">
                     {product.ip && (
@@ -207,6 +254,7 @@ export default async function Home() {
                       {product.name}
                     </h3>
                   </Link>
+
                   {product.category && (
                     <p className="mt-1 text-xs text-[#8b989f]">
                       {product.category}
@@ -214,19 +262,24 @@ export default async function Home() {
                   )}
 
                   <p className="mt-4 text-xl font-black text-[#52799a]">
-                    NT$ {Number(product.price ?? 0).toLocaleString("zh-TW")}
+                    NT${" "}
+                    {Number(
+                      product.price ?? 0
+                    ).toLocaleString("zh-TW")}
                   </p>
 
                   {product.tags?.length > 0 && (
                     <div className="mt-3 hidden flex-wrap gap-1.5 md:flex">
-                      {product.tags.slice(0, 3).map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="text-[11px] text-[#8797a2]"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
+                      {product.tags
+                        .slice(0, 3)
+                        .map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="text-[11px] text-[#8797a2]"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
                     </div>
                   )}
 
@@ -248,9 +301,15 @@ export default async function Home() {
       </section>
 
       {/* About */}
-      <section id="about" className="border-t border-[#dedbd5] bg-[#ebe8e1]">
+      <section
+        id="about"
+        className="border-t border-[#dedbd5] bg-[#ebe8e1]"
+      >
         <div className="mx-auto max-w-7xl px-5 py-10 md:px-8">
-          <h2 className="text-xl font-black">宅研所 OTAKU LAB</h2>
+          <h2 className="text-xl font-black">
+            宅研所 OTAKU LAB
+          </h2>
+
           <p className="mt-3 max-w-xl text-sm leading-7 text-[#647785]">
             ACG 商品展示與選品平台。商品資訊於宅研所展示，
             實際訂購將導向賣貨便完成交易。
