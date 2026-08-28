@@ -23,15 +23,57 @@ export default function ProductGallery({
 
   const selectedImage = images[selectedIndex] ?? images[0];
 
+  const showPrevious = () => {
+    setSelectedIndex((current) =>
+      current === 0 ? images.length - 1 : current - 1
+    );
+  };
+
+  const showNext = () => {
+    setSelectedIndex((current) =>
+      current === images.length - 1 ? 0 : current + 1
+    );
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {/* 主圖片 */}
-      <div className="flex min-h-[500px] items-center justify-center overflow-hidden rounded-[28px] bg-white p-3 shadow-sm">
+      <div className="group relative flex min-h-[500px] items-center justify-center overflow-hidden rounded-[28px] bg-white p-3 shadow-sm">
         <img
           src={selectedImage}
           alt={`${productName} 商品圖片 ${selectedIndex + 1}`}
           className="max-h-[720px] w-full object-contain"
         />
+
+        {/* 左右切換按鈕 */}
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={showPrevious}
+              aria-label="上一張商品圖片"
+              className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
+            >
+              ‹
+            </button>
+
+            <button
+              type="button"
+              onClick={showNext}
+              aria-label="下一張商品圖片"
+              className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[#314f63] shadow-md transition hover:scale-105 hover:bg-white"
+            >
+              ›
+            </button>
+          </>
+        )}
+
+        {/* 圖片編號 */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 right-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+            {selectedIndex + 1} / {images.length}
+          </div>
+        )}
       </div>
 
       {/* 縮圖 */}
@@ -39,7 +81,7 @@ export default function ProductGallery({
         <div className="grid grid-cols-3 gap-3">
           {images.map((image, index) => (
             <button
-              key={image}
+              key={`${image}-${index}`}
               type="button"
               onClick={() => setSelectedIndex(index)}
               className={`overflow-hidden rounded-xl border-2 bg-white p-1 transition ${
