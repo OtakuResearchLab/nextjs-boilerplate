@@ -64,18 +64,25 @@ export default async function ProductPage({
 
         <div className="grid gap-10 md:grid-cols-2">
           {/* 商品圖片 */}
-          <div className="overflow-hidden rounded-[28px] bg-white shadow-sm">
-            {product.images?.[0] ? (
-              <img
-                src={product.images[0]}
-                alt={product.name ?? "商品圖片"}
-                className="h-auto w-full object-cover"
-              />
-            ) : (
-              <div className="flex aspect-square items-center justify-center bg-[#e9e6df] text-[#8c8c8c]">
-                暫無商品圖片
-              </div>
-            )}
+          <div className="space-y-4">
+            {product.images?.length > 0 ? (
+              product.images.map((image: string, index: number) => (
+               <div
+                 key={image}
+                 className="overflow-hidden rounded-[28px] bg-white shadow-sm"
+              >
+                 <img
+                   src={image}
+                   alt={`${product.name ?? "商品圖片"} ${index + 1}`}
+                   className="h-auto w-full object-cover"
+                 />
+                </div>
+              ))
+  ) : (
+    <div className="flex aspect-square items-center justify-center rounded-[28px] bg-[#e9e6df] text-[#8c8c8c]">
+      暫無商品圖片
+    </div>
+  )}
           </div>
 
           {/* 商品資訊 */}
