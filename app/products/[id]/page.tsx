@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ProductGallery from "./ProductGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -63,27 +64,11 @@ export default async function ProductPage({
         </Link>
 
         <div className="grid gap-10 md:grid-cols-2">
-          {/* 商品圖片 */}
-          <div className="space-y-4">
-            {product.images?.length > 0 ? (
-              product.images.map((image: string, index: number) => (
-               <div
-                 key={image}
-                 className="overflow-hidden rounded-[28px] bg-white shadow-sm"
-              >
-                 <img
-                   src={image}
-                   alt={`${product.name ?? "商品圖片"} ${index + 1}`}
-                   className="h-auto w-full object-cover"
-                 />
-                </div>
-              ))
-  ) : (
-    <div className="flex aspect-square items-center justify-center rounded-[28px] bg-[#e9e6df] text-[#8c8c8c]">
-      暫無商品圖片
-    </div>
-  )}
-          </div>
+        {/* 商品圖片 */}
+        <ProductGallery
+          images={product.images ?? []}
+          productName={product.name ?? "商品"}
+        />  
 
           {/* 商品資訊 */}
           <div className="flex flex-col justify-center">
