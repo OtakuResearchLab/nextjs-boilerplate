@@ -8,12 +8,59 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
+type SearchParams = {
+  ip?: string | string[];
+  region?: string | string[];
+  category?: string | string[];
+  type?: string | string[];
+};
+
+function getParam(value: string | string[] | undefined) {
+  return typeof value === "string" && value.length > 0 ? value : "全部";
+}
+
+function createFilterHref(
+  current: {
+    ip: string;
+    region: string;
+    category: string;
+    type: string;
+  },
+  key: "ip" | "region" | "category" | "type",
+  value: string
+) {
+  const next = {
+    ...current,
+    [key]: value,
+  };
+
+  const query = new URLSearchParams();
+
+  if (next.ip !== "全部") {
+    query.set("ip", next.ip);
+  }
+
+  if (next.region !== "全部") {
+    query.set("region", next.region);
+  }
+
+  if (next.category !== "全部") {
+    query.set("category", next.category);
+  }
+
+  if (next.type !== "全部") {
+    query.set("type", next.type);
+  }
+
+  const queryString = query.toString();
+
+  return queryString ? `/?${queryString}#products` : "/#products";
+}
+
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{
-    ip?: string | string[];
-  }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { data: products, error } = await supabase
     .from("products")
@@ -34,6 +81,7 @@ export default async function Home({
   }
 
   const allProducts = products ?? [];
+  const params = await searchParams;
 
   const ipList = [
     "全部",
@@ -41,25 +89,100 @@ export default async function Home({
       new Set(
         allProducts
           .map((product) => product.ip)
-          .filter((ip): ip is string => Boolean(ip))
+          .filter((value): value is string => Boolean(value))
       )
     ),
   ];
 
-  const params = await searchParams;
-  const requestedIp =
-    typeof params.ip === "string" && params.ip.length > 0
-      ? params.ip
-      : "全部";
+  const regionList = [
+    "全部",
+    ...Array.from(
+      new Set(
+        allProducts
+          .map((product) => product.region)
+          .filter((value): value is string => Boolean(value))
+      )
+    ),
+  ];
+
+  const categoryList = [
+    "全部",
+    ...Array.from(
+      new Set(
+        allProducts
+          .map((product) => product.category)
+          .filter((value): value is string => Boolean(value))
+      )
+    ),
+  ];
+
+  const typeList = [
+    "全部",
+    ...Array.from(
+      new Set(
+        allProducts
+          .map((product) => product.source_type)
+          .filter((value): value is string => Boolean(value))
+      )
+    ),
+  ];
+
+  const requestedIp = getParam(params.ip);
+  const requestedRegion = getParam(params.region);
+  const requestedCategory = getParam(params.category);
+  const requestedType = getParam(params.type);
 
   const selectedIp = ipList.includes(requestedIp)
     ? requestedIp
     : "全部";
 
-  const filteredProducts =
-    selectedIp === "全部"
-      ? allProducts
-      : allProducts.filter((product) => product.ip === selectedIp);
+  const selectedRegion = regionList.includes(requestedRegion)
+    ? requestedRegion
+    : "全部";
+
+  const selectedCategory = categoryList.includes(requestedCategory)
+    ? requestedCategory
+    : "全部";
+
+  const selectedType = typeList.includes(requestedType)
+    ? requestedType
+    : "全部";
+
+  const currentFilters = {
+    ip: selectedIp,
+    region: selectedRegion,
+    category: selectedCategory,
+    type: selectedType,
+  };
+
+  const filteredProducts = allProducts.filter((product) => {
+    const matchesIp =
+      selectedIp === "全部" || product.ip === selectedIp;
+
+    const matchesRegion =
+      selectedRegion === "全部" || product.region === selectedRegion;
+
+    const matchesCategory =
+      selectedCategory === "全部" ||
+      product.category === selectedCategory;
+
+    const matchesType =
+      selectedType === "全部" ||
+      product.source_type === selectedType;
+
+    return (
+      matchesIp &&
+      matchesRegion &&
+      matchesCategory &&
+      matchesType
+    );
+  });
+
+  const hasActiveFilters =
+    selectedIp !== "全部" ||
+    selectedRegion !== "全部" ||
+    selectedCategory !== "全部" ||
+    selectedType !== "全部";
 
   return (
     <main className="min-h-screen bg-[#f7f5f1] text-[#263746]">
@@ -125,35 +248,32 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Categories */}
+      {/* IP Categories */}
       <section
         id="categories"
-        className="mx-auto max-w-7xl px-5 py-10 md:px-8"
+        className="mx-auto max-w-7xl px-5 pb-5 pt-10 md:px-8"
       >
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-              CATEGORY
-            </p>
-            <h2 className="mt-1 text-2xl font-black">
-              熱門分類
-            </h2>
-          </div>
+        <div>
+          <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+            IP / SERIES
+          </p>
+          <h2 className="mt-1 text-2xl font-black">
+            作品分類
+          </h2>
         </div>
 
         <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
           {ipList.map((ip) => {
             const isSelected = selectedIp === ip;
 
-            const href =
-              ip === "全部"
-                ? "/#products"
-                : `/?ip=${encodeURIComponent(ip)}#products`;
-
             return (
               <Link
                 key={ip}
-                href={href}
+                href={createFilterHref(
+                  currentFilters,
+                  "ip",
+                  ip
+                )}
                 className={`shrink-0 rounded-full border px-5 py-2.5 text-sm font-medium transition ${
                   isSelected
                     ? "border-[#344b5e] bg-[#344b5e] text-white"
@@ -167,12 +287,120 @@ export default async function Home({
         </div>
       </section>
 
+      {/* Filters */}
+      <section className="mx-auto max-w-7xl px-5 pb-10 md:px-8">
+        <div className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+                FILTER
+              </p>
+              <h2 className="mt-1 text-lg font-black">
+                篩選商品
+              </h2>
+            </div>
+
+            {hasActiveFilters && (
+              <Link
+                href="/#products"
+                className="rounded-full border border-[#d7d6d1] px-4 py-2 text-xs font-semibold text-[#60798c] transition hover:bg-[#eef3f6]"
+              >
+                清除篩選
+              </Link>
+            )}
+          </div>
+
+          <div className="mt-5 space-y-5">
+            {/* Region */}
+            <div>
+              <p className="mb-2 text-xs font-bold text-[#7890a3]">
+                來源產地
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {regionList.map((region) => (
+                  <Link
+                    key={region}
+                    href={createFilterHref(
+                      currentFilters,
+                      "region",
+                      region
+                    )}
+                    className={`rounded-full px-4 py-2 text-xs font-medium transition ${
+                      selectedRegion === region
+                        ? "bg-[#60798c] text-white"
+                        : "bg-[#f1f3f4] text-[#61727e] hover:bg-[#e3eaee]"
+                    }`}
+                  >
+                    {region}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <p className="mb-2 text-xs font-bold text-[#7890a3]">
+                商品種類
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {categoryList.map((category) => (
+                  <Link
+                    key={category}
+                    href={createFilterHref(
+                      currentFilters,
+                      "category",
+                      category
+                    )}
+                    className={`rounded-full px-4 py-2 text-xs font-medium transition ${
+                      selectedCategory === category
+                        ? "bg-[#60798c] text-white"
+                        : "bg-[#f1f3f4] text-[#61727e] hover:bg-[#e3eaee]"
+                    }`}
+                  >
+                    {category}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Type */}
+            <div>
+              <p className="mb-2 text-xs font-bold text-[#7890a3]">
+                商品類型
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {typeList.map((type) => (
+                  <Link
+                    key={type}
+                    href={createFilterHref(
+                      currentFilters,
+                      "type",
+                      type
+                    )}
+                    className={`rounded-full px-4 py-2 text-xs font-medium transition ${
+                      selectedType === type
+                        ? "bg-[#60798c] text-white"
+                        : "bg-[#f1f3f4] text-[#61727e] hover:bg-[#e3eaee]"
+                    }`}
+                  >
+                    {type}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Products */}
       <section
         id="products"
         className="mx-auto max-w-7xl px-5 pb-16 md:px-8"
       >
-        <div className="mb-6 flex items-end justify-between">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
               NEW ARRIVALS
@@ -185,14 +413,14 @@ export default async function Home({
             </h2>
           </div>
 
-          <span className="text-sm text-[#7890a3]">
+          <span className="shrink-0 text-sm text-[#7890a3]">
             共 {filteredProducts.length} 件
           </span>
         </div>
 
         {filteredProducts.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center text-[#8797a2]">
-            此分類目前沒有上架商品。
+            沒有符合目前篩選條件的商品。
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
