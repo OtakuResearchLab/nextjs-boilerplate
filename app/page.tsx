@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import FilterSelect from "./FilterSelect";
 
 export const dynamic = "force-dynamic";
 
@@ -310,34 +311,7 @@ export default async function Home({
             )}
           </div>
 
-          <div className="mt-5 space-y-5">
-            {/* Region */}
-            <div>
-              <p className="mb-2 text-xs font-bold text-[#7890a3]">
-                來源產地
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {regionList.map((region) => (
-                  <Link
-                    key={region}
-                    href={createFilterHref(
-                      currentFilters,
-                      "region",
-                      region
-                    )}
-                    className={`rounded-full px-4 py-2 text-xs font-medium transition ${
-                      selectedRegion === region
-                        ? "bg-[#60798c] text-white"
-                        : "bg-[#f1f3f4] text-[#61727e] hover:bg-[#e3eaee]"
-                    }`}
-                  >
-                    {region}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
+          <div className="mt-6">
             {/* Category */}
             <div>
               <p className="mb-2 text-xs font-bold text-[#7890a3]">
@@ -365,31 +339,21 @@ export default async function Home({
               </div>
             </div>
 
-            {/* Type */}
-            <div>
-              <p className="mb-2 text-xs font-bold text-[#7890a3]">
-                商品類型
-              </p>
+            {/* Type + Region */}
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-8">
+              <FilterSelect
+                label="商品類型"
+                paramName="type"
+                value={selectedType}
+                options={typeList}
+              />
 
-              <div className="flex flex-wrap gap-2">
-                {typeList.map((type) => (
-                  <Link
-                    key={type}
-                    href={createFilterHref(
-                      currentFilters,
-                      "type",
-                      type
-                    )}
-                    className={`rounded-full px-4 py-2 text-xs font-medium transition ${
-                      selectedType === type
-                        ? "bg-[#60798c] text-white"
-                        : "bg-[#f1f3f4] text-[#61727e] hover:bg-[#e3eaee]"
-                    }`}
-                  >
-                    {type}
-                  </Link>
-                ))}
-              </div>
+              <FilterSelect
+                label="來源產地"
+                paramName="region"
+                value={selectedRegion}
+                options={regionList}
+              />
             </div>
           </div>
         </div>
