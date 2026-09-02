@@ -204,12 +204,14 @@ export default async function ProductsPage({
             <Link href="/" className="hover:text-[#6e91ad]">
               首頁
             </Link>
+
             <Link
               href="/products"
               className="font-bold text-[#52799a]"
             >
               商品
             </Link>
+
             <Link href="/#about" className="hover:text-[#6e91ad]">
               關於宅研所
             </Link>
@@ -241,7 +243,7 @@ export default async function ProductsPage({
         id="products"
         className="mx-auto max-w-7xl px-5 pb-16 md:px-8"
       >
-        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+        <div className="grid gap-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-8">
           {/* IP Sidebar */}
           <aside>
             <div className="lg:sticky lg:top-24">
