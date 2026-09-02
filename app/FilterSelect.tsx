@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type FilterSelectProps = {
   label: string;
@@ -16,6 +16,7 @@ export default function FilterSelect({
   options,
 }: FilterSelectProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -32,10 +33,13 @@ export default function FilterSelect({
 
     const queryString = params.toString();
 
+    const basePath =
+      pathname === "/products" ? "/products" : "/";
+
     router.push(
       queryString
-        ? `/?${queryString}#products`
-        : "/#products"
+        ? `${basePath}?${queryString}#products`
+        : `${basePath}#products`
     );
   };
 
