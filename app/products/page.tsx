@@ -195,6 +195,7 @@ export default async function ProductsPage({
             <h1 className="text-2xl font-black tracking-wider">
               宅研所
             </h1>
+
             <p className="text-[11px] tracking-[0.28em] text-[#7890a3]">
               OTAKU LAB
             </p>
@@ -224,7 +225,7 @@ export default async function ProductsPage({
       </header>
 
       {/* Page Heading */}
-      <section className="mx-auto max-w-7xl px-5 pb-7 pt-8 md:px-8 md:pt-12">
+      <section className="w-full px-5 pb-7 pt-8 md:px-8 md:pt-12 xl:px-10 2xl:px-12">
         <p className="text-xs font-semibold tracking-[0.22em] text-[#88a1b4]">
           OTAKU LAB GOODS
         </p>
@@ -241,7 +242,7 @@ export default async function ProductsPage({
       {/* Shop Layout */}
       <section
         id="products"
-        className="mx-auto max-w-7xl px-5 pb-16 md:px-8"
+        className="w-full px-5 pb-16 md:px-8 xl:px-10 2xl:px-12"
       >
         <div className="grid gap-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-8">
           {/* IP Sidebar */}
@@ -410,7 +411,7 @@ export default async function ProductsPage({
                 沒有符合目前篩選條件的商品。
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
                 {filteredProducts.map((product) => (
                   <article
                     key={product.id}
