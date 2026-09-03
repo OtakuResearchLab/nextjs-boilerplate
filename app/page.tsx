@@ -172,7 +172,6 @@ export default async function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#dedbd5] bg-[#f7f5f1]/95 backdrop-blur">
         <div className="flex w-full items-center gap-5 px-5 py-4 md:px-8 xl:px-10 2xl:px-12">
-          {/* Menu */}
           <button
             type="button"
             aria-label="開啟選單"
@@ -181,7 +180,6 @@ export default async function Home() {
             ☰
           </button>
 
-          {/* Logo */}
           <Link href="/" className="shrink-0">
             <h1 className="text-[28px] font-black leading-none tracking-wider md:text-[32px]">
               宅研所
@@ -191,7 +189,6 @@ export default async function Home() {
             </p>
           </Link>
 
-          {/* Brand sentence */}
           <div className="hidden border-l border-[#d8d8d5] pl-5 lg:block">
             <p className="text-sm font-medium text-[#6f818d]">
               研究你的熱愛，整理值得收藏的 ACG 周邊。
@@ -199,7 +196,6 @@ export default async function Home() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
-            {/* Products */}
             <Link
               href="/products"
               className="hidden shrink-0 rounded-full bg-[#344b5e] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#263746] md:block"
@@ -207,7 +203,6 @@ export default async function Home() {
               商品一覽
             </Link>
 
-            {/* Search */}
             <div className="flex w-[260px] items-center rounded-full border border-[#ccd4da] bg-white px-5 py-2.5 md:w-[340px] xl:w-[440px]">
               <span className="mr-3 text-[#9aa9b3]">⌕</span>
               <span className="truncate text-sm text-[#9aa9b3]">
@@ -223,7 +218,6 @@ export default async function Home() {
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
           {/* LEFT */}
           <aside className="space-y-6">
-            {/* Filters */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 FILTER
@@ -233,7 +227,6 @@ export default async function Home() {
                 商品篩選
               </h2>
 
-              {/* Category select */}
               <div className="mt-5">
                 <label className="mb-2 block text-xs font-bold text-[#7890a3]">
                   商品種類
@@ -259,7 +252,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Type select */}
               <div className="mt-4">
                 <label className="mb-2 block text-xs font-bold text-[#7890a3]">
                   商品類型
@@ -285,7 +277,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Region */}
               <div className="mt-5">
                 <p className="mb-2 text-xs font-bold text-[#7890a3]">
                   來源產地
@@ -314,7 +305,6 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* IP */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 IP / SERIES
@@ -347,7 +337,6 @@ export default async function Home() {
 
           {/* CENTER */}
           <div className="min-w-0 space-y-8">
-            {/* Latest */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="flex items-end justify-between gap-4">
                 <div>
@@ -385,7 +374,6 @@ export default async function Home() {
               )}
             </section>
 
-            {/* Popular */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div>
                 <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
@@ -412,11 +400,25 @@ export default async function Home() {
                 </div>
               )}
             </section>
+
+            {/* Recently Viewed - moved into center */}
+            <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
+              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+                RECENTLY VIEWED
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black">
+                你曾瀏覽過
+              </h2>
+
+              <div className="mt-5 flex min-h-[110px] items-center justify-center rounded-2xl bg-[#f7f5f1] text-sm text-[#8797a2]">
+                瀏覽紀錄功能將於下一階段加入。
+              </div>
+            </section>
           </div>
 
           {/* RIGHT */}
           <aside className="space-y-6">
-            {/* Otaku Lab */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 OTAKU LAB
@@ -450,7 +452,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Events */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 EVENTS
@@ -471,6 +472,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     EVENT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     國內 ACG 活動
                   </p>
@@ -480,6 +482,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     OVERSEAS
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     海外相關活動
                   </p>
@@ -489,6 +492,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     CONCERT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     ACG 音樂會
                   </p>
@@ -496,7 +500,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 PARTNERS
@@ -511,23 +514,6 @@ export default async function Home() {
               </div>
             </div>
           </aside>
-        </div>
-      </section>
-
-      {/* Recently Viewed */}
-      <section className="w-full px-5 pb-12 md:px-8 xl:px-10 2xl:px-12">
-        <div className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
-          <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-            RECENTLY VIEWED
-          </p>
-
-          <h2 className="mt-1 text-2xl font-black">
-            你曾瀏覽過
-          </h2>
-
-          <div className="mt-5 flex min-h-[110px] items-center justify-center rounded-2xl bg-[#f7f5f1] text-sm text-[#8797a2]">
-            瀏覽紀錄功能將於下一階段加入。
-          </div>
         </div>
       </section>
 
