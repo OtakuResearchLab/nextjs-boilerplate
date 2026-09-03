@@ -35,11 +35,7 @@ function ProductCard({
   return (
     <article className="group overflow-hidden rounded-[20px] border border-[#dedbd5] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#60798c]/10">
       <Link href={`/products/${product.id}`} className="block">
-        <div
-          className={`relative overflow-hidden bg-[#e9edf0] ${
-            compact ? "aspect-[4/5]" : "aspect-[4/5]"
-          }`}
-        >
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#e9edf0]">
           {product.images?.[0] ? (
             <img
               src={product.images[0]}
@@ -74,8 +70,8 @@ function ProductCard({
                 product.status === "現貨"
                   ? "bg-[#e8f3ec] text-[#568066]"
                   : product.status === "預購"
-                  ? "bg-[#fff0df] text-[#b4763e]"
-                  : "bg-[#eeeeee] text-[#888888]"
+                    ? "bg-[#fff0df] text-[#b4763e]"
+                    : "bg-[#eeeeee] text-[#888888]"
               }`}
             >
               {product.status}
@@ -106,8 +102,7 @@ function ProductCard({
             compact ? "mt-3 text-lg" : "mt-4 text-xl"
           }`}
         >
-          NT${" "}
-          {Number(product.price ?? 0).toLocaleString("zh-TW")}
+          NT$ {Number(product.price ?? 0).toLocaleString("zh-TW")}
         </p>
       </div>
     </article>
@@ -177,42 +172,56 @@ export default async function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#dedbd5] bg-[#f7f5f1]/95 backdrop-blur">
         <div className="flex w-full items-center gap-5 px-5 py-4 md:px-8 xl:px-10 2xl:px-12">
+          {/* Menu */}
+          <button
+            type="button"
+            aria-label="開啟選單"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-[#60798c] transition hover:bg-[#ebeef0]"
+          >
+            ☰
+          </button>
+
+          {/* Logo */}
           <Link href="/" className="shrink-0">
-            <h1 className="text-2xl font-black tracking-wider">
+            <h1 className="text-[28px] font-black leading-none tracking-wider md:text-[32px]">
               宅研所
             </h1>
-            <p className="text-[11px] tracking-[0.28em] text-[#7890a3]">
+            <p className="mt-1 text-[11px] tracking-[0.3em] text-[#7890a3]">
               OTAKU LAB
             </p>
           </Link>
 
-          <div className="hidden text-2xl text-[#7890a3] md:block">
-            ☰
+          {/* Brand sentence */}
+          <div className="hidden border-l border-[#d8d8d5] pl-5 lg:block">
+            <p className="text-sm font-medium text-[#6f818d]">
+              研究你的熱愛，整理值得收藏的 ACG 周邊。
+            </p>
           </div>
 
-          <div className="ml-auto flex w-full max-w-xl items-center rounded-full border border-[#ccd4da] bg-white px-5 py-2.5">
-            <span className="mr-3 text-[#9aa9b3]">
-              ⌕
-            </span>
+          <div className="ml-auto flex items-center gap-3">
+            {/* Products */}
+            <Link
+              href="/products"
+              className="hidden shrink-0 rounded-full bg-[#344b5e] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#263746] md:block"
+            >
+              商品一覽
+            </Link>
 
-            <span className="text-sm text-[#9aa9b3]">
-              搜尋商品、作品或關鍵字
-            </span>
+            {/* Search */}
+            <div className="flex w-[260px] items-center rounded-full border border-[#ccd4da] bg-white px-5 py-2.5 md:w-[340px] xl:w-[440px]">
+              <span className="mr-3 text-[#9aa9b3]">⌕</span>
+              <span className="truncate text-sm text-[#9aa9b3]">
+                搜尋商品、作品或關鍵字
+              </span>
+            </div>
           </div>
-
-          <Link
-            href="/products"
-            className="hidden shrink-0 rounded-full bg-[#344b5e] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#263746] md:block"
-          >
-            商品一覽
-          </Link>
         </div>
       </header>
 
-      {/* Main Layout */}
+      {/* Main */}
       <section className="w-full px-5 py-7 md:px-8 xl:px-10 2xl:px-12">
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
-          {/* Left Sidebar */}
+          {/* LEFT */}
           <aside className="space-y-6">
             {/* Filters */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
@@ -224,46 +233,59 @@ export default async function Home() {
                 商品篩選
               </h2>
 
+              {/* Category select */}
               <div className="mt-5">
-                <p className="mb-2 text-xs font-bold text-[#7890a3]">
+                <label className="mb-2 block text-xs font-bold text-[#7890a3]">
                   商品種類
-                </p>
+                </label>
 
-                <div className="flex flex-wrap gap-2">
-                  {categoryList.slice(0, 6).map((category) => (
-                    <Link
-                      key={category}
-                      href={`/products?category=${encodeURIComponent(
-                        category
-                      )}#products`}
-                      className="rounded-full bg-[#f1f3f4] px-3 py-2 text-xs text-[#61727e] transition hover:bg-[#60798c] hover:text-white"
-                    >
-                      {category}
-                    </Link>
-                  ))}
+                <div className="relative">
+                  <select
+                    defaultValue=""
+                    className="w-full appearance-none rounded-xl border border-[#d7dfe4] bg-[#f7f8f8] px-4 py-3 pr-10 text-sm font-medium text-[#526b7d] outline-none"
+                  >
+                    <option value="">全部</option>
+
+                    {categoryList.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#7890a3]">
+                    ▼
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <p className="mb-2 text-xs font-bold text-[#7890a3]">
+              {/* Type select */}
+              <div className="mt-4">
+                <label className="mb-2 block text-xs font-bold text-[#7890a3]">
                   商品類型
-                </p>
+                </label>
 
-                <div className="space-y-1">
-                  {typeList.map((type) => (
-                    <Link
-                      key={type}
-                      href={`/products?type=${encodeURIComponent(
-                        type
-                      )}#products`}
-                      className="block rounded-lg px-2 py-2 text-sm text-[#526b7d] transition hover:bg-[#eef3f6]"
-                    >
-                      {type}
-                    </Link>
-                  ))}
+                <div className="relative">
+                  <select
+                    defaultValue=""
+                    className="w-full appearance-none rounded-xl border border-[#d7dfe4] bg-[#f7f8f8] px-4 py-3 pr-10 text-sm font-medium text-[#526b7d] outline-none"
+                  >
+                    <option value="">全部</option>
+
+                    {typeList.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#7890a3]">
+                    ▼
+                  </span>
                 </div>
               </div>
 
+              {/* Region */}
               <div className="mt-5">
                 <p className="mb-2 text-xs font-bold text-[#7890a3]">
                   來源產地
@@ -292,7 +314,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* IP List */}
+            {/* IP */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 IP / SERIES
@@ -313,9 +335,7 @@ export default async function Home() {
                 {ipList.map((ip) => (
                   <Link
                     key={ip}
-                    href={`/products?ip=${encodeURIComponent(
-                      ip
-                    )}#products`}
+                    href={`/products?ip=${encodeURIComponent(ip)}#products`}
                     className="block rounded-xl px-3 py-2.5 text-sm text-[#526b7d] transition hover:bg-[#eef3f6] hover:text-[#344b5e]"
                   >
                     {ip}
@@ -325,9 +345,9 @@ export default async function Home() {
             </div>
           </aside>
 
-          {/* Center */}
+          {/* CENTER */}
           <div className="min-w-0 space-y-8">
-            {/* New Arrivals */}
+            {/* Latest */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="flex items-end justify-between gap-4">
                 <div>
@@ -367,16 +387,14 @@ export default async function Home() {
 
             {/* Popular */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                    POPULAR
-                  </p>
+              <div>
+                <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+                  POPULAR
+                </p>
 
-                  <h2 className="mt-1 text-2xl font-black">
-                    熱門商品
-                  </h2>
-                </div>
+                <h2 className="mt-1 text-2xl font-black">
+                  熱門商品
+                </h2>
               </div>
 
               {featuredProducts.length === 0 ? (
@@ -384,7 +402,7 @@ export default async function Home() {
                   熱門商品準備中。
                 </div>
               ) : (
-                <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-4">
                   {featuredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -396,9 +414,9 @@ export default async function Home() {
             </section>
           </div>
 
-          {/* Right Sidebar */}
+          {/* RIGHT */}
           <aside className="space-y-6">
-            {/* Otaku Lab Links */}
+            {/* Otaku Lab */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 OTAKU LAB
@@ -432,7 +450,53 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Artists */}
+            {/* Events */}
+            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
+              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+                EVENTS
+              </p>
+
+              <div className="flex items-center justify-between">
+                <h2 className="mt-1 text-xl font-black">
+                  相關活動資訊
+                </h2>
+
+                <span className="text-xs text-[#88a1b4]">
+                  MORE →
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
+                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
+                    EVENT
+                  </span>
+                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
+                    國內 ACG 活動
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
+                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
+                    OVERSEAS
+                  </span>
+                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
+                    海外相關活動
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
+                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
+                    CONCERT
+                  </span>
+                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
+                    ACG 音樂會
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 PARTNERS
@@ -450,7 +514,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Recently Viewed Placeholder */}
+      {/* Recently Viewed */}
       <section className="w-full px-5 pb-12 md:px-8 xl:px-10 2xl:px-12">
         <div className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
           <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
