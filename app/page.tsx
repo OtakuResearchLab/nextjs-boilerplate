@@ -114,7 +114,7 @@ export default async function Home() {
     .from("products")
     .select("*")
     .eq("published", true)
-    .order("id", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) {
     return (
