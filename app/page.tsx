@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import SiteHeader from "./SiteHeader";
+import HomeFilter from "./HomeFilter";
 
 export const dynamic = "force-dynamic";
 
@@ -175,10 +176,11 @@ export default async function Home() {
       {/* Main */}
       <section className="w-full px-5 py-7 md:px-8 xl:px-10 2xl:px-12">
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
+
           {/* LEFT */}
           <aside className="space-y-6">
 
-            {/* 作品選單：移到最上方 */}
+            {/* 作品選單 */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 IP / SERIES
@@ -208,97 +210,19 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* 商品篩選：移到作品選單下方 */}
-            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                FILTER
-              </p>
+            {/* 商品篩選 */}
+            <HomeFilter
+              categories={categoryList}
+              types={typeList}
+              regions={regionList}
+            />
 
-              <h2 className="mt-1 text-xl font-black">
-                商品篩選
-              </h2>
-
-              <div className="mt-5">
-                <label className="mb-2 block text-xs font-bold text-[#7890a3]">
-                  商品種類
-                </label>
-
-                <div className="relative">
-                  <select
-                    defaultValue=""
-                    className="w-full appearance-none rounded-xl border border-[#d7dfe4] bg-[#f7f8f8] px-4 py-3 pr-10 text-sm font-medium text-[#526b7d] outline-none"
-                  >
-                    <option value="">全部</option>
-
-                    {categoryList.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#7890a3]">
-                    ▼
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-2 block text-xs font-bold text-[#7890a3]">
-                  商品類型
-                </label>
-
-                <div className="relative">
-                  <select
-                    defaultValue=""
-                    className="w-full appearance-none rounded-xl border border-[#d7dfe4] bg-[#f7f8f8] px-4 py-3 pr-10 text-sm font-medium text-[#526b7d] outline-none"
-                  >
-                    <option value="">全部</option>
-
-                    {typeList.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#7890a3]">
-                    ▼
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <p className="mb-2 text-xs font-bold text-[#7890a3]">
-                  來源產地
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {regionList.map((region) => (
-                    <Link
-                      key={region}
-                      href={`/products?region=${encodeURIComponent(
-                        region
-                      )}#products`}
-                      className="rounded-full bg-[#f1f3f4] px-3 py-2 text-xs text-[#61727e] transition hover:bg-[#60798c] hover:text-white"
-                    >
-                      {region}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <Link
-                href="/products"
-                className="mt-6 block rounded-xl border border-[#ccd4da] px-4 py-3 text-center text-sm font-bold text-[#526b7d] transition hover:bg-[#eef3f6]"
-              >
-                查看完整篩選
-              </Link>
-            </div>
           </aside>
 
           {/* CENTER */}
           <div className="min-w-0 space-y-8">
+
+            {/* 新品上架 */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="flex items-end justify-between gap-4">
                 <div>
@@ -336,6 +260,7 @@ export default async function Home() {
               )}
             </section>
 
+            {/* 熱門商品 */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div>
                 <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
@@ -377,10 +302,12 @@ export default async function Home() {
                 瀏覽紀錄功能將於下一階段加入。
               </div>
             </section>
+
           </div>
 
           {/* RIGHT */}
           <aside className="space-y-6">
+
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 OTAKU LAB
@@ -414,6 +341,7 @@ export default async function Home() {
               </div>
             </div>
 
+            {/* Events */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 EVENTS
@@ -434,6 +362,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     EVENT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     國內 ACG 活動
                   </p>
@@ -443,6 +372,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     OVERSEAS
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     海外相關活動
                   </p>
@@ -452,6 +382,7 @@ export default async function Home() {
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     CONCERT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     ACG 音樂會
                   </p>
@@ -459,6 +390,7 @@ export default async function Home() {
               </div>
             </div>
 
+            {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 PARTNERS
@@ -472,6 +404,7 @@ export default async function Home() {
                 合作繪師與社團連結之後會顯示在這裡。
               </div>
             </div>
+
           </aside>
         </div>
       </section>
