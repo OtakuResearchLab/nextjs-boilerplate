@@ -313,13 +313,15 @@ export default async function ProductPage({
                         aria-label="前往宅研所 Facebook 粉專詢問商品問題"
                         className="group inline-flex items-center gap-2 rounded-xl bg-[#5f8ba8] px-4 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-md"
                       >
-                        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 text-xs font-black">
+                        <span className="text-xl font-black leading-none text-white">
                           問
                         </span>
 
-                        <span>前往詢問</span>
+                        <span className="text-sm font-bold text-white">
+                          前往詢問
+                        </span>
 
-                        <span className="text-xs text-white/70 transition-transform group-hover:translate-x-0.5">
+                        <span className="text-sm text-white/80 transition-transform group-hover:translate-x-0.5">
                           →
                         </span>
                       </a>
