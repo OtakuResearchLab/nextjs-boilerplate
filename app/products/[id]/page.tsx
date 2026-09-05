@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductGallery from "./ProductGallery";
+import SiteHeader from "../../SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -108,11 +109,6 @@ export default async function ProductPage({
 
   const product = productData as Product;
 
-  /*
-   * 讀取全部商品：
-   * 1. 左側 IP 選單
-   * 2. 同 IP 其他商品
-   */
   const { data: allProductsData } = await supabase
     .from("products")
     .select("*")
@@ -129,12 +125,6 @@ export default async function ProductPage({
     )
   );
 
-  /*
-   * 同 IP 商品：
-   * - 排除目前商品
-   * - created_at 已經由新到舊
-   * - 最多顯示 5 件
-   */
   const relatedProducts = product.ip
     ? allProducts
         .filter(
@@ -147,55 +137,8 @@ export default async function ProductPage({
 
   return (
     <main className="min-h-screen bg-[#f7f5f1] text-[#263746]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[#dedbd5] bg-[#f7f5f1]/95 backdrop-blur">
-        <div className="flex w-full items-center gap-5 px-5 py-4 md:px-8 xl:px-10 2xl:px-12">
-          <button
-            type="button"
-            aria-label="開啟選單"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-2xl text-[#60798c] transition hover:bg-[#ebeef0]"
-          >
-            ☰
-          </button>
+      <SiteHeader />
 
-          <Link href="/" className="shrink-0">
-            <h1 className="text-[28px] font-black leading-none tracking-wider md:text-[32px]">
-              宅研所
-            </h1>
-
-            <p className="mt-1 text-[11px] tracking-[0.3em] text-[#7890a3]">
-              OTAKU LAB
-            </p>
-          </Link>
-
-          <div className="hidden border-l border-[#d8d8d5] pl-5 lg:block">
-            <p className="text-sm font-medium text-[#6f818d]">
-              研究你的熱愛，整理值得收藏的 ACG 周邊。
-            </p>
-          </div>
-
-          <div className="ml-auto flex items-center gap-3">
-            <Link
-              href="/products"
-              className="hidden shrink-0 rounded-full bg-[#344b5e] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#263746] md:block"
-            >
-              商品一覽
-            </Link>
-
-            <div className="flex w-[260px] items-center rounded-full border border-[#ccd4da] bg-white px-5 py-2.5 md:w-[340px] xl:w-[440px]">
-              <span className="mr-3 text-[#9aa9b3]">
-                ⌕
-              </span>
-
-              <span className="truncate text-sm text-[#9aa9b3]">
-                搜尋商品、作品或關鍵字
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main three-column layout */}
       <section className="w-full px-5 py-7 md:px-8 xl:px-10 2xl:px-12">
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
           {/* LEFT */}
@@ -244,11 +187,8 @@ export default async function ProductPage({
 
           {/* CENTER */}
           <div className="min-w-0 space-y-8">
-            {/* Product */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-
-                {/* 這裡已改成返回首頁 */}
                 <Link
                   href="/"
                   className="text-sm font-semibold text-[#6688a3] transition hover:opacity-60"
@@ -264,13 +204,11 @@ export default async function ProductPage({
               </div>
 
               <div className="grid gap-8 lg:grid-cols-2">
-                {/* Gallery */}
                 <ProductGallery
                   images={product.images ?? []}
                   productName={product.name ?? "商品"}
                 />
 
-                {/* Product info */}
                 <div className="flex min-w-0 flex-col justify-center">
                   {product.featured && (
                     <span className="mb-4 w-fit rounded-full bg-[#dd7968] px-4 py-2 text-xs font-bold text-white">
@@ -286,7 +224,6 @@ export default async function ProductPage({
                     {product.name}
                   </h1>
 
-                  {/* Product labels */}
                   <div className="mt-5 flex flex-wrap gap-2">
                     {product.status && (
                       <span
@@ -410,7 +347,7 @@ export default async function ProductPage({
               </section>
             )}
 
-            {/* Recently viewed */}
+            {/* Recently Viewed */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 RECENTLY VIEWED
@@ -428,7 +365,6 @@ export default async function ProductPage({
 
           {/* RIGHT */}
           <aside className="space-y-6">
-            {/* Otaku Lab */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 OTAKU LAB
@@ -462,7 +398,6 @@ export default async function ProductPage({
               </div>
             </div>
 
-            {/* Events */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 EVENTS
@@ -511,7 +446,6 @@ export default async function ProductPage({
               </div>
             </div>
 
-            {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 PARTNERS
