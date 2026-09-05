@@ -44,7 +44,7 @@ function RelatedProductCard({
               className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-[#9aa9b3]">
+            <div className="flex h-full w-full items-center justify-center text-xs text-[#9aa9b3]">
               No Image
             </div>
           )}
@@ -247,17 +247,13 @@ export default async function ProductPage({
             {/* Product */}
             <section className="rounded-[24px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+
+                {/* 這裡已改成返回首頁 */}
                 <Link
-                  href={
-                    product.ip
-                      ? `/products?ip=${encodeURIComponent(
-                          product.ip
-                        )}#products`
-                      : "/products"
-                  }
+                  href="/"
                   className="text-sm font-semibold text-[#6688a3] transition hover:opacity-60"
                 >
-                  ← 返回商品一覽
+                  ← 返回首頁
                 </Link>
 
                 {product.ip && (
