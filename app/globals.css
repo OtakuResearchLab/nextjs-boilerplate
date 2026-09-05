@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* =========================
+   宅研所 LIGHT THEME
+   ========================= */
+
 :root {
   --background: #f7f5f1;
   --foreground: #263746;
@@ -7,8 +11,10 @@
   --surface: #ffffff;
   --surface-soft: #f1f3f4;
   --surface-muted: #ebe8e1;
+  --surface-extra-soft: #faf9f6;
 
   --border: #dedbd5;
+  --border-strong: #ccd4da;
 
   --text-primary: #263746;
   --text-secondary: #647785;
@@ -18,24 +24,35 @@
   --accent-dark: #344b5e;
 }
 
-/* 關燈模式 */
+/* =========================
+   宅研所 DARK THEME
+   ========================= */
+
 html.dark {
-  --background: #15191d;
-  --foreground: #e6edf2;
+  --background: #12171b;
+  --foreground: #e9eff3;
 
-  --surface: #1f252a;
-  --surface-soft: #262d33;
-  --surface-muted: #1b2025;
+  --surface: #1c2328;
+  --surface-soft: #252d33;
+  --surface-muted: #181e23;
+  --surface-extra-soft: #20272c;
 
-  --border: #374149;
+  --border: #354047;
+  --border-strong: #46535c;
 
   --text-primary: #edf3f7;
   --text-secondary: #b4c0c9;
-  --text-muted: #8997a2;
+  --text-muted: #8998a3;
 
-  --accent: #88abc7;
-  --accent-dark: #668ba7;
+  --accent: #8aafca;
+  --accent-dark: #557a94;
+
+  color-scheme: dark;
 }
+
+/* =========================
+   TAILWIND THEME
+   ========================= */
 
 @theme inline {
   --color-background: var(--background);
@@ -44,20 +61,29 @@ html.dark {
   --font-mono: var(--font-geist-mono);
 }
 
+/* =========================
+   BASE
+   ========================= */
+
 html {
-  background: var(--background);
+  background-color: var(--background);
 }
 
 body {
-  background: var(--background);
+  margin: 0;
+  background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
 }
 
-/* 共用主題工具 */
+/* =========================
+   THEME UTILITY CLASSES
+   ========================= */
+
 .theme-background {
   background-color: var(--background);
 }
@@ -96,4 +122,126 @@ body {
 
 .theme-accent-bg {
   background-color: var(--accent-dark);
+}
+
+/* =====================================================
+   DARK MODE COMPATIBILITY
+   目前網站大量使用既有 Tailwind 固定色碼，
+   這裡統一轉換，不必每一頁重新修改。
+   ===================================================== */
+
+/* ---------- 整體背景 ---------- */
+
+html.dark body,
+html.dark main {
+  background-color: var(--background) !important;
+  color: var(--text-primary) !important;
+}
+
+html.dark [class~="bg-[#f7f5f1]"],
+html.dark [class~="bg-[#f7f5f1]/95"] {
+  background-color: var(--background) !important;
+}
+
+/* ---------- 白色卡片 ---------- */
+
+html.dark .bg-white {
+  background-color: var(--surface) !important;
+}
+
+/* ---------- 淺灰區域 ---------- */
+
+html.dark [class~="bg-[#f1f3f4]"],
+html.dark [class~="bg-[#eef3f6]"],
+html.dark [class~="bg-[#edf2f5]"],
+html.dark [class~="bg-[#f7f8f8]"],
+html.dark [class~="bg-[#e9edf0]"] {
+  background-color: var(--surface-soft) !important;
+}
+
+/* ---------- 淺米色區域 ---------- */
+
+html.dark [class~="bg-[#ebe8e1]"] {
+  background-color: var(--surface-muted) !important;
+}
+
+html.dark [class~="bg-[#faf9f6]"] {
+  background-color: var(--surface-extra-soft) !important;
+}
+
+/* ---------- 邊框 ---------- */
+
+html.dark [class~="border-[#dedbd5]"],
+html.dark [class~="border-[#d7dfe4]"],
+html.dark [class~="border-[#d6d1ca]"],
+html.dark [class~="border-[#d8d8d5]"],
+html.dark [class~="border-[#e3e1dc]"] {
+  border-color: var(--border) !important;
+}
+
+html.dark [class~="border-[#ccd4da]"] {
+  border-color: var(--border-strong) !important;
+}
+
+/* ---------- 主要文字 ---------- */
+
+html.dark [class~="text-[#263746]"] {
+  color: var(--text-primary) !important;
+}
+
+/* ---------- 次要文字 ---------- */
+
+html.dark [class~="text-[#526b7d]"],
+html.dark [class~="text-[#61727e]"],
+html.dark [class~="text-[#647785]"],
+html.dark [class~="text-[#65717b]"],
+html.dark [class~="text-[#6f818d]"],
+html.dark [class~="text-[#7a7a7a]"] {
+  color: var(--text-secondary) !important;
+}
+
+/* ---------- 輔助文字 ---------- */
+
+html.dark [class~="text-[#8797a2]"],
+html.dark [class~="text-[#7890a3]"],
+html.dark [class~="text-[#88a1b4]"],
+html.dark [class~="text-[#9aa9b3]"],
+html.dark [class~="text-[#8b989f]"] {
+  color: var(--text-muted) !important;
+}
+
+/* ---------- 藍色重點文字 ---------- */
+
+html.dark [class~="text-[#52799a]"],
+html.dark [class~="text-[#6688a3]"],
+html.dark [class~="text-[#7d9bb2]"],
+html.dark [class~="text-[#60798c]"] {
+  color: var(--accent) !important;
+}
+
+/* ---------- 深藍按鈕 ---------- */
+
+html.dark [class~="bg-[#344b5e]"],
+html.dark [class~="bg-[#314f63]"],
+html.dark [class~="bg-[#263746]"] {
+  background-color: var(--accent-dark) !important;
+}
+
+/* 深色按鈕上的白字維持白色 */
+html.dark .text-white {
+  color: #ffffff !important;
+}
+
+/* ---------- 原生表單 ---------- */
+
+html.dark select,
+html.dark input,
+html.dark textarea {
+  color: var(--text-primary);
+}
+
+/* ---------- 圖片不受暗色模式影響 ---------- */
+
+html.dark img {
+  filter: none;
 }
