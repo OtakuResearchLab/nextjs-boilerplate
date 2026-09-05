@@ -297,37 +297,43 @@ export default async function ProductPage({
                     </a>
                   )}
 
-                  {/* 商品說明 + 買家發問 */}
-                  <div className="mt-7 border-t border-[#dedbd5] pt-5">
-                    <div className="text-xs leading-6 text-[#7a7a7a]">
-                      商品資訊及實際庫存、售價以購買頁面顯示為準。
-                      <br />
-                      宅研所整理與展示 ACG 相關商品資訊。
-                    </div>
+          {/* 商品說明 + 買家發問 */}
+          <div className="mt-7 border-t border-[#dedbd5] pt-5">
+            {/* 商品說明 */}
+            <div className="text-xs leading-6 text-[#7a7a7a]">
+              商品資訊及實際庫存、售價以購買頁面顯示為準。
+              <br />
+              宅研所整理與展示 ACG 相關商品資訊。
+            </div>
 
-                    <div className="mt-4 flex justify-end">
-                      <a
-                        href="https://www.facebook.com/OtakuResearchLab"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="商品相關問題｜前往宅研所粉專"
-                        aria-label="商品相關問題，前往宅研所 Facebook 粉專"
-                        className="group relative inline-flex items-center gap-2 rounded-2xl border border-[#cbd6de] bg-[#f5f8fa] px-4 py-2.5 text-sm font-bold text-[#52799a] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#88a9bf] hover:bg-[#edf4f8] hover:shadow-md"
-                      >
-                        {/* 對話氣泡 */}
-                        <span className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-[#52799a] text-xs font-black text-white">
-                          問
-                          <span className="absolute -bottom-1 left-1.5 h-2 w-2 rotate-45 bg-[#52799a]" />
-                        </span>
+            {/* 商品問題按鈕 */}
+            <div className="mt-8 flex justify-end">
+              <a
+                href="https://www.facebook.com/OtakuResearchLab"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="商品相關問題｜前往宅研所粉專"
+                aria-label="商品相關問題，前往宅研所 Facebook 粉專"
+                className="group relative inline-flex items-center gap-2 rounded-2xl bg-[#314f63] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-85 hover:shadow-md"
+                >
+                  {/* 問字對話氣泡 */}
+                  <span className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-[#52799a] text-xs font-black text-white">
+                    問
 
-                        <span>商品有問題？</span>
+                    {/* 氣泡小尾巴 */}
+                    <span className="absolute -bottom-1 left-1.5 h-2 w-2 rotate-45 bg-[#52799a]" />
+                  </span>
 
-                        <span className="text-xs font-medium text-[#88a1b4] transition-transform group-hover:translate-x-0.5">
-                          →
-                        </span>
-                      </a>
-                    </div>
+                  {/* 按鈕文字 */}
+                  <span>商品有問題？</span>
+
+                  {/* 箭頭 */}
+                  <span className="text-xs font-medium text-white/70 transition-transform group-hover:translate-x-0.5">
+                   →
+                    </span>
+                   </a>
                   </div>
+                 </div>
                 </div>
               </div>
             </section>
