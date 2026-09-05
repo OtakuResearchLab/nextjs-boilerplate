@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import FilterSelect from "../FilterSelect";
+import SiteHeader from "../SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,7 @@ export default async function ProductsPage({
     return (
       <main className="min-h-screen bg-[#f7f5f1] p-8 text-[#263746]">
         <h1 className="text-2xl font-bold">宅研所</h1>
+
         <p className="mt-4 text-red-500">
           商品讀取失敗：{error.message}
         </p>
@@ -188,41 +190,8 @@ export default async function ProductsPage({
 
   return (
     <main className="min-h-screen bg-[#f7f5f1] text-[#263746]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[#dedbd5] bg-[#f7f5f1]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="block">
-            <h1 className="text-2xl font-black tracking-wider">
-              宅研所
-            </h1>
-
-            <p className="text-[11px] tracking-[0.28em] text-[#7890a3]">
-              OTAKU LAB
-            </p>
-          </Link>
-
-          <nav className="hidden items-center gap-7 text-sm font-medium md:flex">
-            <Link href="/" className="hover:text-[#6e91ad]">
-              首頁
-            </Link>
-
-            <Link
-              href="/products"
-              className="font-bold text-[#52799a]"
-            >
-              商品
-            </Link>
-
-            <Link href="/#about" className="hover:text-[#6e91ad]">
-              關於宅研所
-            </Link>
-          </nav>
-
-          <div className="rounded-full border border-[#ccd4da] bg-white px-4 py-2 text-sm text-[#7890a3]">
-            PRODUCTS
-          </div>
-        </div>
-      </header>
+      {/* 共用 Header */}
+      <SiteHeader />
 
       {/* Page Heading */}
       <section className="w-full px-5 pb-7 pt-8 md:px-8 md:pt-12 xl:px-10 2xl:px-12">
@@ -245,6 +214,7 @@ export default async function ProductsPage({
         className="w-full px-5 pb-16 md:px-8 xl:px-10 2xl:px-12"
       >
         <div className="grid gap-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-8">
+
           {/* IP Sidebar */}
           <aside>
             <div className="lg:sticky lg:top-24">
@@ -312,6 +282,7 @@ export default async function ProductsPage({
 
           {/* Product Area */}
           <div className="min-w-0">
+
             {/* Filters */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5 md:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -456,8 +427,8 @@ export default async function ProductsPage({
                               product.status === "現貨"
                                 ? "bg-[#e8f3ec] text-[#568066]"
                                 : product.status === "預購"
-                                ? "bg-[#fff0df] text-[#b4763e]"
-                                : "bg-[#eeeeee] text-[#888888]"
+                                  ? "bg-[#fff0df] text-[#b4763e]"
+                                  : "bg-[#eeeeee] text-[#888888]"
                             }`}
                           >
                             {product.status}
@@ -518,21 +489,59 @@ export default async function ProductsPage({
         </div>
       </section>
 
-      {/* About */}
-      <section className="border-t border-[#dedbd5] bg-[#ebe8e1]">
-        <div className="mx-auto max-w-7xl px-5 py-10 md:px-8">
-          <h2 className="text-xl font-black">
-            宅研所 OTAKU LAB
-          </h2>
+      {/* About / Social Links */}
+      <section
+        id="about"
+        className="border-t border-[#dedbd5] bg-[#ebe8e1]"
+      >
+        <div className="mx-auto max-w-7xl px-5 py-7 md:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 
-          <p className="mt-3 max-w-xl text-sm leading-7 text-[#647785]">
-            ACG 商品展示與選品平台。商品資訊於宅研所展示，
-            實際訂購將導向賣貨便完成交易。
-          </p>
+            {/* 品牌說明 */}
+            <div>
+              <h2 className="text-xl font-black">
+                宅研所 OTAKU LAB
+              </h2>
+
+              <p className="mt-3 max-w-xl text-sm leading-7 text-[#647785]">
+                ACG 商品展示與選品平台。商品資訊於宅研所展示，
+                實際訂購將導向賣貨便完成交易。
+              </p>
+            </div>
+
+            {/* 社群入口 */}
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="https://www.facebook.com/OtakuResearchLab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d] transition hover:-translate-y-0.5 hover:bg-[#eef3f6]"
+              >
+                宅研所粉專
+              </a>
+
+              <a
+                href="https://www.facebook.com/groups/otakuresearchlab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d] transition hover:-translate-y-0.5 hover:bg-[#eef3f6]"
+              >
+                宅研所社團
+              </a>
+
+              <div
+                title="LINE ID：@615cceko"
+                className="cursor-default rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d]"
+              >
+                宅研所官方LINE：@615cceko
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <footer className="bg-[#263746] px-5 py-7 text-center text-xs tracking-wider text-[#aebac3]">
+      {/* Footer */}
+      <footer className="bg-[#263746] px-5 py-3 text-center text-[11px] tracking-wider text-[#aebac3]">
         © 2026 OTAKU LAB · 宅研所
       </footer>
     </main>
