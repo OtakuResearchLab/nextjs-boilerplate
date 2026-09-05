@@ -141,6 +141,7 @@ export default async function ProductPage({
 
       <section className="w-full px-5 py-7 md:px-8 xl:px-10 2xl:px-12">
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
+
           {/* LEFT */}
           <aside>
             <div className="xl:sticky xl:top-24">
@@ -303,7 +304,6 @@ export default async function ProductPage({
                       宅研所整理與展示 ACG 相關商品資訊。
                     </div>
 
-                    {/* 只保留詢問按鈕 */}
                     <div className="mt-8 flex justify-end">
                       <a
                         href="https://www.facebook.com/OtakuResearchLab"
@@ -390,39 +390,8 @@ export default async function ProductPage({
 
           {/* RIGHT */}
           <aside className="space-y-6">
-            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                OTAKU LAB
-              </p>
 
-              <h2 className="mt-1 text-xl font-black">
-                宅研所
-              </h2>
-
-              <div className="mt-4 space-y-2">
-                <div className="rounded-xl bg-[#f1f3f4] px-4 py-3 text-sm text-[#61727e]">
-                  宅研所 FB
-                  <span className="ml-2 text-xs text-[#9aa9b3]">
-                    待設定
-                  </span>
-                </div>
-
-                <div className="rounded-xl bg-[#f1f3f4] px-4 py-3 text-sm text-[#61727e]">
-                  宅研所社團
-                  <span className="ml-2 text-xs text-[#9aa9b3]">
-                    待設定
-                  </span>
-                </div>
-
-                <div className="rounded-xl bg-[#f1f3f4] px-4 py-3 text-sm text-[#61727e]">
-                  宅研所賣貨便
-                  <span className="ml-2 text-xs text-[#9aa9b3]">
-                    待設定
-                  </span>
-                </div>
-              </div>
-            </div>
-
+            {/* Events */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 EVENTS
@@ -443,6 +412,7 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     EVENT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     國內 ACG 活動
                   </p>
@@ -452,6 +422,7 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     OVERSEAS
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     海外相關活動
                   </p>
@@ -461,6 +432,7 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     CONCERT
                   </span>
+
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     ACG 音樂會
                   </p>
@@ -468,6 +440,7 @@ export default async function ProductPage({
               </div>
             </div>
 
+            {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 PARTNERS
@@ -485,24 +458,57 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* About */}
+      {/* About / Social */}
       <section
         id="about"
         className="border-t border-[#dedbd5] bg-[#ebe8e1]"
       >
-        <div className="mx-auto max-w-7xl px-5 py-10 md:px-8">
-          <h2 className="text-xl font-black">
-            宅研所 OTAKU LAB
-          </h2>
+        <div className="mx-auto max-w-7xl px-5 py-7 md:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
 
-          <p className="mt-3 max-w-xl text-sm leading-7 text-[#647785]">
-            ACG 商品展示與選品平台。商品資訊於宅研所展示，
-            實際訂購將導向賣貨便完成交易。
-          </p>
+            <div>
+              <h2 className="text-xl font-black">
+                宅研所 OTAKU LAB
+              </h2>
+
+              <p className="mt-3 max-w-xl text-sm leading-7 text-[#647785]">
+                ACG 商品展示與選品平台。商品資訊於宅研所展示，
+                實際訂購將導向賣貨便完成交易。
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="https://www.facebook.com/OtakuResearchLab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d] transition hover:-translate-y-0.5 hover:bg-[#eef3f6]"
+              >
+                宅研所粉專
+              </a>
+
+              <a
+                href="https://www.facebook.com/groups/otakuresearchlab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d] transition hover:-translate-y-0.5 hover:bg-[#eef3f6]"
+              >
+                宅研所社團
+              </a>
+
+              <div
+                title="LINE ID：@615cceko"
+                className="cursor-default rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d]"
+              >
+                宅研所官方LINE：@615cceko
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <footer className="bg-[#263746] px-5 py-7 text-center text-xs tracking-wider text-[#aebac3]">
+      {/* Footer */}
+      <footer className="bg-[#263746] px-5 py-3 text-center text-[11px] tracking-wider text-[#aebac3]">
         © 2026 OTAKU LAB · 宅研所
       </footer>
     </main>
