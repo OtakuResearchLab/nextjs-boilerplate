@@ -1,8 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f5f1;
+  --foreground: #263746;
+
+  --surface: #ffffff;
+  --surface-soft: #f1f3f4;
+  --surface-muted: #ebe8e1;
+
+  --border: #dedbd5;
+
+  --text-primary: #263746;
+  --text-secondary: #647785;
+  --text-muted: #8797a2;
+
+  --accent: #52799a;
+  --accent-dark: #344b5e;
+}
+
+/* 關燈模式 */
+html.dark {
+  --background: #15191d;
+  --foreground: #e6edf2;
+
+  --surface: #1f252a;
+  --surface-soft: #262d33;
+  --surface-muted: #1b2025;
+
+  --border: #374149;
+
+  --text-primary: #edf3f7;
+  --text-secondary: #b4c0c9;
+  --text-muted: #8997a2;
+
+  --accent: #88abc7;
+  --accent-dark: #668ba7;
 }
 
 @theme inline {
@@ -12,15 +44,56 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* 共用主題工具 */
+.theme-background {
+  background-color: var(--background);
+}
+
+.theme-surface {
+  background-color: var(--surface);
+}
+
+.theme-surface-soft {
+  background-color: var(--surface-soft);
+}
+
+.theme-surface-muted {
+  background-color: var(--surface-muted);
+}
+
+.theme-border {
+  border-color: var(--border);
+}
+
+.theme-text {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-accent {
+  color: var(--accent);
+}
+
+.theme-accent-bg {
+  background-color: var(--accent-dark);
 }
