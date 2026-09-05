@@ -177,6 +177,38 @@ export default async function Home() {
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_250px]">
           {/* LEFT */}
           <aside className="space-y-6">
+
+            {/* 作品選單：移到最上方 */}
+            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
+              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
+                IP / SERIES
+              </p>
+
+              <h2 className="mt-1 text-xl font-black">
+                作品選單
+              </h2>
+
+              <div className="mt-4 space-y-1">
+                <Link
+                  href="/products"
+                  className="block rounded-xl bg-[#344b5e] px-3 py-2.5 text-sm font-bold text-white"
+                >
+                  全部商品
+                </Link>
+
+                {ipList.map((ip) => (
+                  <Link
+                    key={ip}
+                    href={`/products?ip=${encodeURIComponent(ip)}#products`}
+                    className="block rounded-xl px-3 py-2.5 text-sm text-[#526b7d] transition hover:bg-[#eef3f6] hover:text-[#344b5e]"
+                  >
+                    {ip}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* 商品篩選：移到作品選單下方 */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
               <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
                 FILTER
@@ -262,35 +294,6 @@ export default async function Home() {
               >
                 查看完整篩選
               </Link>
-            </div>
-
-            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                IP / SERIES
-              </p>
-
-              <h2 className="mt-1 text-xl font-black">
-                作品選單
-              </h2>
-
-              <div className="mt-4 space-y-1">
-                <Link
-                  href="/products"
-                  className="block rounded-xl bg-[#344b5e] px-3 py-2.5 text-sm font-bold text-white"
-                >
-                  全部商品
-                </Link>
-
-                {ipList.map((ip) => (
-                  <Link
-                    key={ip}
-                    href={`/products?ip=${encodeURIComponent(ip)}#products`}
-                    className="block rounded-xl px-3 py-2.5 text-sm text-[#526b7d] transition hover:bg-[#eef3f6] hover:text-[#344b5e]"
-                  >
-                    {ip}
-                  </Link>
-                ))}
-              </div>
             </div>
           </aside>
 
