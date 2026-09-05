@@ -280,9 +280,7 @@ export default async function ProductPage({
                   {product.price != null && (
                     <div className="mt-7 text-3xl font-black text-[#52799a]">
                       NT${" "}
-                      {Number(product.price).toLocaleString(
-                        "zh-TW"
-                      )}
+                      {Number(product.price).toLocaleString("zh-TW")}
                     </div>
                   )}
 
@@ -297,43 +295,48 @@ export default async function ProductPage({
                     </a>
                   )}
 
-          {/* 商品說明 + 買家發問 */}
-          <div className="mt-7 border-t border-[#dedbd5] pt-5">
-            {/* 商品說明 */}
-            <div className="text-xs leading-6 text-[#7a7a7a]">
-              商品資訊及實際庫存、售價以購買頁面顯示為準。
-              <br />
-              宅研所整理與展示 ACG 相關商品資訊。
-            </div>
+                  {/* 商品說明 */}
+                  <div className="mt-7 border-t border-[#dedbd5] pt-5">
+                    <div className="text-xs leading-6 text-[#7a7a7a]">
+                      商品資訊及實際庫存、售價以購買頁面顯示為準。
+                      <br />
+                      宅研所整理與展示 ACG 相關商品資訊。
+                    </div>
 
-            {/* 商品問題按鈕 */}
-            <div className="mt-8 flex justify-end">
-              <a
-                href="https://www.facebook.com/OtakuResearchLab"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="商品相關問題｜前往宅研所粉專"
-                aria-label="商品相關問題，前往宅研所 Facebook 粉專"
-                className="group relative inline-flex items-center gap-2 rounded-2xl bg-[#314f63] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-85 hover:shadow-md"
-                >
-                  {/* 問字對話氣泡 */}
-                  <span className="relative flex h-7 w-7 items-center justify-center rounded-xl bg-[#52799a] text-xs font-black text-white">
-                    問
+                    {/* 商品詢問區塊 */}
+                    <div className="mt-8 rounded-2xl border border-[#405767] bg-[#22303a] p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">
+                            商品相關問題
+                          </p>
 
-                    {/* 氣泡小尾巴 */}
-                    <span className="absolute -bottom-1 left-1.5 h-2 w-2 rotate-45 bg-[#52799a]" />
-                  </span>
+                          <p className="mt-1 text-xs leading-5 text-[#aebfca]">
+                            有任何商品問題，歡迎透過宅研所粉專詢問。
+                          </p>
+                        </div>
 
-                  {/* 按鈕文字 */}
-                  <span>商品有問題？</span>
+                        <a
+                          href="https://www.facebook.com/OtakuResearchLab"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="前往宅研所粉專詢問"
+                          aria-label="前往宅研所 Facebook 粉專詢問商品問題"
+                          className="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#5f8ba8] px-4 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-md"
+                        >
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 text-xs font-black">
+                            問
+                          </span>
 
-                  {/* 箭頭 */}
-                  <span className="text-xs font-medium text-white/70 transition-transform group-hover:translate-x-0.5">
-                   →
-                    </span>
-                   </a>
+                          <span>前往詢問</span>
+
+                          <span className="text-xs text-white/70 transition-transform group-hover:translate-x-0.5">
+                            →
+                          </span>
+                        </a>
+                      </div>
+                    </div>
                   </div>
-                 </div>
                 </div>
               </div>
             </section>
@@ -450,7 +453,6 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     EVENT
                   </span>
-
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     國內 ACG 活動
                   </p>
@@ -460,7 +462,6 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     OVERSEAS
                   </span>
-
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     海外相關活動
                   </p>
@@ -470,7 +471,6 @@ export default async function ProductPage({
                   <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
                     CONCERT
                   </span>
-
                   <p className="mt-1 text-sm font-bold text-[#526b7d]">
                     ACG 音樂會
                   </p>
