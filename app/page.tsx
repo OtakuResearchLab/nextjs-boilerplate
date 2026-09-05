@@ -418,13 +418,10 @@ export default async function Home() {
               </a>
 
               <div
-                title="宅研所 LINE 官方帳號籌備中"
-                className="cursor-default rounded-xl border border-[#d8d8d8] bg-[#f4f3f0] px-4 py-3 text-sm font-bold text-[#8b989f]"
+                title="LINE ID：@615cceko"
+                className="cursor-default rounded-xl border border-[#ccd4da] bg-white px-4 py-3 text-sm font-bold text-[#526b7d]"
               >
-                宅研所LINE
-                <span className="ml-2 text-xs font-normal">
-                  籌備中
-                </span>
+                宅研所官方LINE：@615cceko
               </div>
 
             </div>
