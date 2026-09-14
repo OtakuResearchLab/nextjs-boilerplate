@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import HomeFilter from "./HomeFilter";
 import ActivityPanel from "./ActivityPanel";
+import PartnersPanel from "./PartnersPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -311,19 +312,7 @@ export default async function Home() {
             <ActivityPanel />
 
             {/* Partners */}
-            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                PARTNERS
-              </p>
-
-              <h2 className="mt-1 text-xl font-black">
-                合作繪師
-              </h2>
-
-              <div className="mt-4 rounded-xl bg-[#f7f5f1] p-5 text-sm leading-7 text-[#8797a2]">
-                合作繪師與社團連結之後會顯示在這裡。
-              </div>
-            </div>
+            <PartnersPanel />
 
           </aside>
         </div>
