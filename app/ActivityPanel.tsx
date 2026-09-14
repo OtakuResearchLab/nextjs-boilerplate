@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 export default async function ActivityPanel() {
   const supabase = createClient(
@@ -45,9 +46,12 @@ export default async function ActivityPanel() {
           </h2>
         </div>
 
-        <span className="text-xs font-bold text-[#7890a3]">
+        <Link
+          href="/events"
+          className="text-xs font-bold text-[#7890a3] transition hover:text-[#52799a]"
+        >
           MORE →
-        </span>
+        </Link>
       </div>
 
       {!error && events && events.length > 0 ? (
