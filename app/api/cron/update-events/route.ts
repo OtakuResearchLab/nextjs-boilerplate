@@ -4,34 +4,28 @@ import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+const SUPABASE_SECRET_KEY =
+  process.env.SUPABASE_SECRET_KEY!;
+
+const CRON_SECRET =
+  process.env.CRON_SECRET!;
+
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  SUPABASE_URL,
+  SUPABASE_SECRET_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
 );
 
 const SANTORA_URL =
   "https://santora.tw/information-of-live-concert/";
-
-const SOURCES = [
-  {
-    name: "Santora",
-    type: "website",
-    region: "台灣 / 日本",
-    url: SANTORA_URL,
-  },
-  {
-    name: "Anime Maps",
-    type: "website",
-    region: "台灣 / 日本",
-    url: "https://animemaps.com/zh-hant/event/",
-  },
-  {
-    name: "Bilibili 會員購票務",
-    type: "ticket-platform",
-    region: "中國大陸",
-    url: "https://mall.bilibili.com/neul-next/ticket/home.html?noTitleBar=1",
-  },
-];
 
 type TrackedIp = {
   id: number;
@@ -63,11 +57,18 @@ type ParsedSantoraItem = {
 
   santoraUrl: string;
 
-  fingerprintPreview: string;
+  fingerprint: string;
+};
+
+type SourcePayload = {
+  source_type: string;
+  source_name: string;
+  source_url: string;
+  source_title: string;
+  raw_data: Record<string, unknown>;
 };
 
 const CITY_RULES = [
-  // 日本
   { keywords: ["東京"], city: "東京", region: "日本" },
   { keywords: ["大阪"], city: "大阪", region: "日本" },
   { keywords: ["兵庫", "神戶", "神戸"], city: "兵庫", region: "日本" },
@@ -83,7 +84,6 @@ const CITY_RULES = [
   { keywords: ["埼玉"], city: "埼玉", region: "日本" },
   { keywords: ["鳥取"], city: "鳥取", region: "日本" },
 
-  // 台灣
   { keywords: ["台北", "臺北"], city: "台北", region: "台灣" },
   { keywords: ["新北"], city: "新北", region: "台灣" },
   { keywords: ["桃園"], city: "桃園", region: "台灣" },
@@ -146,15 +146,25 @@ function isShortLatinAlias(alias: string) {
   return /^[a-z0-9]+$/i.test(alias) && alias.length <= 4;
 }
 
-function aliasMatches(text: string, alias: string) {
-  const normalizedText = normalizeText(text);
-  const normalizedAlias = normalizeText(alias);
+function aliasMatches(
+  text: string,
+  alias: string
+) {
+  const normalizedText =
+    normalizeText(text);
+
+  const normalizedAlias =
+    normalizeText(alias);
 
   if (!normalizedAlias) {
     return false;
   }
 
-  if (isShortLatinAlias(normalizedAlias)) {
+  if (
+    isShortLatinAlias(
+      normalizedAlias
+    )
+  ) {
     const pattern = new RegExp(
       `(^|[^a-z0-9])${escapeRegExp(
         normalizedAlias
@@ -162,10 +172,14 @@ function aliasMatches(text: string, alias: string) {
       "i"
     );
 
-    return pattern.test(normalizedText);
+    return pattern.test(
+      normalizedText
+    );
   }
 
-  return normalizedText.includes(normalizedAlias);
+  return normalizedText.includes(
+    normalizedAlias
+  );
 }
 
 function findIpMatch(
@@ -177,11 +191,22 @@ function findIpMatch(
 } | null {
   for (const ip of trackedIps) {
     const aliases = Array.from(
-      new Set([ip.name, ...(ip.aliases ?? [])])
-    ).sort((a, b) => b.length - a.length);
+      new Set([
+        ip.name,
+        ...(ip.aliases ?? []),
+      ])
+    ).sort(
+      (a, b) =>
+        b.length - a.length
+    );
 
     for (const alias of aliases) {
-      if (aliasMatches(text, alias)) {
+      if (
+        aliasMatches(
+          text,
+          alias
+        )
+      ) {
         return {
           ip: ip.name,
           alias,
@@ -194,21 +219,36 @@ function findIpMatch(
 }
 
 function getTaipeiToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Taipei",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }
+    ).formatToParts(
+      new Date()
+    );
 
   const year =
-    parts.find((part) => part.type === "year")?.value ?? "";
+    parts.find(
+      (part) =>
+        part.type === "year"
+    )?.value ?? "";
 
   const month =
-    parts.find((part) => part.type === "month")?.value ?? "";
+    parts.find(
+      (part) =>
+        part.type === "month"
+    )?.value ?? "";
 
   const day =
-    parts.find((part) => part.type === "day")?.value ?? "";
+    parts.find(
+      (part) =>
+        part.type === "day"
+    )?.value ?? "";
 
   return `${year}-${month}-${day}`;
 }
@@ -218,10 +258,15 @@ function normalizeDate(
   month: string,
   day: string
 ) {
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  return `${year}-${month.padStart(
+    2,
+    "0"
+  )}-${day.padStart(2, "0")}`;
 }
 
-function parseDateAtStart(text: string) {
+function parseDateAtStart(
+  text: string
+) {
   const match = text.match(
     /^\s*(20\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:\s*[-~～]\s*(\d{1,2}))?/
   );
@@ -233,26 +278,37 @@ function parseDateAtStart(text: string) {
   const year = match[1];
   const month = match[2];
   const startDay = match[3];
-  const endDay = match[4] ?? null;
+  const endDay =
+    match[4] ?? null;
 
   return {
     raw: match[0],
-    eventDate: normalizeDate(
-      year,
-      month,
-      startDay
-    ),
+
+    eventDate:
+      normalizeDate(
+        year,
+        month,
+        startDay
+      ),
+
     endDate: endDay
-      ? normalizeDate(year, month, endDay)
+      ? normalizeDate(
+          year,
+          month,
+          endDay
+        )
       : null,
   };
 }
 
-function detectCityAndRegionFromText(text: string) {
+function detectCityAndRegionFromText(
+  text: string
+) {
   for (const rule of CITY_RULES) {
     if (
-      rule.keywords.some((keyword) =>
-        text.includes(keyword)
+      rule.keywords.some(
+        (keyword) =>
+          text.includes(keyword)
       )
     ) {
       return {
@@ -268,20 +324,30 @@ function detectCityAndRegionFromText(text: string) {
   };
 }
 
-function detectRegionFromUrl(url: string | null) {
+function detectRegionFromUrl(
+  url: string | null
+) {
   if (!url) {
     return null;
   }
 
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
+    const hostname =
+      new URL(url)
+        .hostname
+        .toLowerCase();
 
-    for (const rule of URL_REGION_RULES) {
+    for (
+      const rule
+      of URL_REGION_RULES
+    ) {
       if (
         rule.domains.some(
           (domain) =>
             hostname === domain ||
-            hostname.endsWith(`.${domain}`)
+            hostname.endsWith(
+              `.${domain}`
+            )
         )
       ) {
         return rule.region;
@@ -296,26 +362,27 @@ function detectRegionFromUrl(url: string | null) {
 
 function resolveLocation(
   text: string,
-  directSourceUrl: string | null,
-  sectionRegion: string | null
+  directSourceUrl:
+    string | null,
+  sectionRegion:
+    string | null
 ) {
-  /*
-   * 優先順序：
-   *
-   * 1. 活動文字中的明確城市
-   * 2. 外部來源網址推斷地區
-   * 3. Santora 區段作 fallback
-   */
-
   const fromText =
-    detectCityAndRegionFromText(text);
+    detectCityAndRegionFromText(
+      text
+    );
 
-  if (fromText.city || fromText.region) {
+  if (
+    fromText.city ||
+    fromText.region
+  ) {
     return fromText;
   }
 
   const fromUrl =
-    detectRegionFromUrl(directSourceUrl);
+    detectRegionFromUrl(
+      directSourceUrl
+    );
 
   if (fromUrl) {
     return {
@@ -330,21 +397,38 @@ function resolveLocation(
   };
 }
 
-function extractSessionHint(text: string) {
+function extractSessionHint(
+  text: string
+) {
   const parentheses =
-    text.match(/[（(]([^（）()]{1,50})[）)]/g) ?? [];
+    text.match(
+      /[（(]([^（）()]{1,50})[）)]/g
+    ) ?? [];
 
-  for (const item of parentheses) {
+  for (
+    const item
+    of parentheses
+  ) {
     const inner = item
-      .replace(/^[（(]/, "")
-      .replace(/[）)]$/, "")
+      .replace(
+        /^[（(]/,
+        ""
+      )
+      .replace(
+        /[）)]$/,
+        ""
+      )
       .trim();
 
     const containsPlace =
-      CITY_RULES.some((rule) =>
-        rule.keywords.some((keyword) =>
-          inner.includes(keyword)
-        )
+      CITY_RULES.some(
+        (rule) =>
+          rule.keywords.some(
+            (keyword) =>
+              inner.includes(
+                keyword
+              )
+          )
       );
 
     if (containsPlace) {
@@ -352,16 +436,22 @@ function extractSessionHint(text: string) {
     }
   }
 
-  const dayMatch = text.match(/\bDAY\s*\d+\b/i);
+  const dayMatch =
+    text.match(
+      /\bDAY\s*\d+\b/i
+    );
 
   if (dayMatch) {
-    return dayMatch[0].toUpperCase();
+    return dayMatch[0]
+      .toUpperCase();
   }
 
   return null;
 }
 
-function extractLinks(html: string) {
+function extractLinks(
+  html: string
+) {
   const links: {
     label: string;
     url: string;
@@ -372,26 +462,38 @@ function extractLinks(html: string) {
 
   let match;
 
-  while ((match = regex.exec(html)) !== null) {
+  while (
+    (match =
+      regex.exec(html)) !==
+    null
+  ) {
     const href = match[1];
-    const label = stripTags(match[2]);
 
-    if (!href || !label) {
+    const label =
+      stripTags(
+        match[2]
+      );
+
+    if (
+      !href ||
+      !label
+    ) {
       continue;
     }
 
     try {
-      const url = new URL(
-        href,
-        SANTORA_URL
-      ).toString();
+      const url =
+        new URL(
+          href,
+          SANTORA_URL
+        ).toString();
 
       links.push({
         label,
         url,
       });
     } catch {
-      // ignore invalid URL
+      // invalid URL
     }
   }
 
@@ -404,25 +506,44 @@ function chooseBestDirectSource(
     url: string;
   }[]
 ) {
-  const external = links.filter(
-    (link) =>
-      !link.url.startsWith("https://santora.tw/")
-  );
+  const external =
+    links.filter(
+      (link) =>
+        !link.url.startsWith(
+          "https://santora.tw/"
+        )
+    );
 
-  if (external.length === 0) {
+  if (
+    external.length === 0
+  ) {
     return null;
   }
 
-  const score = (label: string) => {
-    if (/官網|官方|公式/i.test(label)) {
+  const score = (
+    label: string
+  ) => {
+    if (
+      /官網|官方|公式/i.test(
+        label
+      )
+    ) {
       return 100;
     }
 
-    if (/網頁公告|公告/i.test(label)) {
+    if (
+      /網頁公告|公告/i.test(
+        label
+      )
+    ) {
       return 80;
     }
 
-    if (/售票|購票|抽選|登記/i.test(label)) {
+    if (
+      /售票|購票|抽選|登記/i.test(
+        label
+      )
+    ) {
       return 60;
     }
 
@@ -433,7 +554,8 @@ function chooseBestDirectSource(
     .slice()
     .sort(
       (a, b) =>
-        score(b.label) - score(a.label)
+        score(b.label) -
+        score(a.label)
     )[0];
 }
 
@@ -442,23 +564,39 @@ function cleanTitle(
   rawDate: string
 ) {
   return text
-    .replace(rawDate, "")
+    .replace(
+      rawDate,
+      ""
+    )
     .replace(
       /[（(]\s*(?:官網|官方|公式|售票網|購票|網頁公告|公告|登記抽選|抽選)\s*[）)]/gi,
       ""
     )
-    .replace(/\s+/g, " ")
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
 }
 
-function createCanonicalTitle(title: string) {
-  return normalizeText(title)
+function createCanonicalTitle(
+  title: string
+) {
+  return normalizeText(
+    title
+  )
     .replace(
       /[（(][^（）()]*(?:東京|大阪|兵庫|神戶|神戸|福岡|橫濱|横浜|札幌|北海道|名古屋|愛知|京都|廣島|広島|仙台|宮城|鳥取|台北|臺北|台中|臺中|台南|臺南|高雄)[^（）()]*[）)]/g,
       " "
     )
-    .replace(/\bday\s*\d+\b/gi, " ")
-    .replace(/\s+/g, " ")
+    .replace(
+      /\bday\s*\d+\b/gi,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
 }
 
@@ -468,30 +606,83 @@ function createFingerprint(
   eventDate: string,
   city: string | null
 ) {
-  const normalizedTitle = canonicalTitle
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "");
+  const normalizedTitle =
+    canonicalTitle
+      .replace(
+        /[^\p{L}\p{N}]+/gu,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        ""
+      );
 
   return [
     normalizeText(ip),
     normalizedTitle,
     eventDate,
-    city ? normalizeText(city) : "unknown",
+    city
+      ? normalizeText(city)
+      : "unknown",
   ].join("|");
 }
 
-async function fetchHtml(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; OtakuLabEventBot/1.0)",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    },
-    cache: "no-store",
-  });
+function sourceTypeFromLabel(
+  label: string | null
+) {
+  if (!label) {
+    return "external";
+  }
 
-  const html = await response.text();
+  if (
+    /官網|官方|公式/i.test(
+      label
+    )
+  ) {
+    return "official";
+  }
+
+  if (
+    /售票|購票/i.test(
+      label
+    )
+  ) {
+    return "ticket";
+  }
+
+  if (
+    /公告/i.test(
+      label
+    )
+  ) {
+    return "announcement";
+  }
+
+  return "external";
+}
+
+async function fetchHtml(
+  url: string
+) {
+  const response =
+    await fetch(
+      url,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; OtakuLabEventBot/1.0)",
+
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+
+        cache:
+          "no-store",
+      }
+    );
+
+  const html =
+    await response.text();
 
   return {
     response,
@@ -507,7 +698,9 @@ function parseSantoraItems(
   const tokenRegex =
     /<(h4|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
 
-  let currentRegion: string | null = null;
+  let currentRegion:
+    string | null =
+    null;
 
   type TempItem = {
     ip: string;
@@ -519,55 +712,87 @@ function parseSantoraItems(
     eventDate: string;
     endDate: string | null;
 
-    sectionRegion: string | null;
-
     region: string | null;
     city: string | null;
-    sessionHint: string | null;
 
-    directSourceLabel: string | null;
-    directSourceUrl: string | null;
+    sessionHint:
+      string | null;
+
+    directSourceLabel:
+      string | null;
+
+    directSourceUrl:
+      string | null;
   };
 
-  const allMatchedItems: TempItem[] = [];
+  const allMatchedItems:
+    TempItem[] = [];
 
   let tokenMatch;
 
   while (
-    (tokenMatch = tokenRegex.exec(html)) !== null
+    (tokenMatch =
+      tokenRegex.exec(html)) !==
+    null
   ) {
-    const tag = tokenMatch[1].toLowerCase();
-    const innerHtml = tokenMatch[2];
+    const tag =
+      tokenMatch[1]
+        .toLowerCase();
+
+    const innerHtml =
+      tokenMatch[2];
 
     if (tag === "h4") {
-      const heading = stripTags(innerHtml);
+      const heading =
+        stripTags(
+          innerHtml
+        );
 
-      if (heading.includes("台灣")) {
-        currentRegion = "台灣";
-      } else if (heading.includes("日本")) {
-        currentRegion = "日本";
-      } else if (
-        heading.includes("轉播") ||
-        heading.includes("其他")
+      if (
+        heading.includes(
+          "台灣"
+        )
       ) {
-        currentRegion = null;
+        currentRegion =
+          "台灣";
+      } else if (
+        heading.includes(
+          "日本"
+        )
+      ) {
+        currentRegion =
+          "日本";
+      } else if (
+        heading.includes(
+          "轉播"
+        ) ||
+        heading.includes(
+          "其他"
+        )
+      ) {
+        currentRegion =
+          null;
       }
 
       continue;
     }
 
-    if (tag !== "li") {
+    if (
+      tag !== "li" ||
+      !currentRegion
+    ) {
       continue;
     }
 
-    if (!currentRegion) {
-      continue;
-    }
-
-    const fullText = stripTags(innerHtml);
+    const fullText =
+      stripTags(
+        innerHtml
+      );
 
     const dateInfo =
-      parseDateAtStart(fullText);
+      parseDateAtStart(
+        fullText
+      );
 
     if (!dateInfo) {
       continue;
@@ -577,7 +802,10 @@ function parseSantoraItems(
       dateInfo.endDate ??
       dateInfo.eventDate;
 
-    if (effectiveEnd < today) {
+    if (
+      effectiveEnd <
+      today
+    ) {
       continue;
     }
 
@@ -591,36 +819,51 @@ function parseSantoraItems(
       continue;
     }
 
-    const title = cleanTitle(
-      fullText,
-      dateInfo.raw
-    );
+    const title =
+      cleanTitle(
+        fullText,
+        dateInfo.raw
+      );
 
-    if (title.length < 5) {
+    if (
+      title.length <
+      5
+    ) {
       continue;
     }
 
     const canonicalTitle =
-      createCanonicalTitle(title);
+      createCanonicalTitle(
+        title
+      );
 
     const links =
-      extractLinks(innerHtml);
+      extractLinks(
+        innerHtml
+      );
 
     const bestSource =
-      chooseBestDirectSource(links);
+      chooseBestDirectSource(
+        links
+      );
 
     const location =
       resolveLocation(
         title,
-        bestSource?.url ?? null,
+        bestSource?.url ??
+          null,
         currentRegion
       );
 
     const sessionHint =
-      extractSessionHint(title);
+      extractSessionHint(
+        title
+      );
 
     allMatchedItems.push({
-      ip: ipMatch.ip,
+      ip:
+        ipMatch.ip,
+
       matchedAlias:
         ipMatch.alias,
 
@@ -629,66 +872,88 @@ function parseSantoraItems(
 
       eventDate:
         dateInfo.eventDate,
+
       endDate:
         dateInfo.endDate,
 
-      sectionRegion:
-        currentRegion,
-
       region:
         location.region,
+
       city:
         location.city,
+
       sessionHint,
 
       directSourceLabel:
-        bestSource?.label ?? null,
+        bestSource?.label ??
+        null,
 
       directSourceUrl:
-        bestSource?.url ?? null,
+        bestSource?.url ??
+        null,
     });
   }
 
-  /*
-   * 收集同系列來源網址。
-   */
   const inheritedSources =
     new Map<
       string,
       {
-        label: string | null;
-        url: string;
+        label:
+          string | null;
+        url:
+          string;
       }
     >();
 
-  for (const item of allMatchedItems) {
-    if (!item.directSourceUrl) {
+  for (
+    const item
+    of allMatchedItems
+  ) {
+    if (
+      !item.directSourceUrl
+    ) {
       continue;
     }
 
     const key =
       `${item.ip}|${item.canonicalTitle}`;
 
-    if (!inheritedSources.has(key)) {
-      inheritedSources.set(key, {
-        label:
-          item.directSourceLabel,
-        url:
-          item.directSourceUrl,
-      });
+    if (
+      !inheritedSources.has(
+        key
+      )
+    ) {
+      inheritedSources.set(
+        key,
+        {
+          label:
+            item.directSourceLabel,
+
+          url:
+            item.directSourceUrl,
+        }
+      );
     }
   }
 
-  const result: ParsedSantoraItem[] = [];
+  const result:
+    ParsedSantoraItem[] =
+    [];
 
-  const unique = new Set<string>();
+  const unique =
+    new Set<string>();
 
-  for (const item of allMatchedItems) {
+  for (
+    const item
+    of allMatchedItems
+  ) {
     const inheritKey =
       `${item.ip}|${item.canonicalTitle}`;
 
     const inherited =
-      inheritedSources.get(inheritKey);
+      inheritedSources.get(
+        inheritKey
+      );
 
     const primarySourceUrl =
       item.directSourceUrl ??
@@ -697,19 +962,19 @@ function parseSantoraItems(
 
     const primarySourceType =
       item.directSourceUrl
-        ? item.directSourceLabel ?? "external"
+        ? sourceTypeFromLabel(
+            item.directSourceLabel
+          )
         : inherited
-          ? `inherited:${inherited.label ?? "external"}`
-          : "Santora";
+          ? sourceTypeFromLabel(
+              inherited.label
+            )
+          : "website";
 
-    /*
-     * 如果原本沒有 city，而且這一筆是靠繼承來源取得 URL，
-     * 再用最後 primarySourceUrl 補一次 region。
-     */
     let finalRegion =
       item.region;
 
-    let finalCity =
+    const finalCity =
       item.city;
 
     if (!finalCity) {
@@ -718,13 +983,15 @@ function parseSantoraItems(
           primarySourceUrl
         );
 
-      if (regionFromPrimary) {
+      if (
+        regionFromPrimary
+      ) {
         finalRegion =
           regionFromPrimary;
       }
     }
 
-    const fingerprintPreview =
+    const fingerprint =
       createFingerprint(
         item.ip,
         item.canonicalTitle,
@@ -733,39 +1000,48 @@ function parseSantoraItems(
       );
 
     if (
-      unique.has(fingerprintPreview)
+      unique.has(
+        fingerprint
+      )
     ) {
       continue;
     }
 
     unique.add(
-      fingerprintPreview
+      fingerprint
     );
 
     result.push({
-      ip: item.ip,
+      ip:
+        item.ip,
+
       matchedAlias:
         item.matchedAlias,
 
       title:
         item.title,
+
       canonicalTitle:
         item.canonicalTitle,
 
       eventDate:
         item.eventDate,
+
       endDate:
         item.endDate,
 
       region:
         finalRegion,
+
       city:
         finalCity,
+
       sessionHint:
         item.sessionHint,
 
       directSourceLabel:
         item.directSourceLabel,
+
       directSourceUrl:
         item.directSourceUrl,
 
@@ -775,40 +1051,106 @@ function parseSantoraItems(
       santoraUrl:
         SANTORA_URL,
 
-      fingerprintPreview,
+      fingerprint,
     });
   }
 
   return result;
 }
 
-export async function GET() {
-  try {
-    const {
-      data: trackedIpRows,
-      error: trackedIpError,
-    } = await supabase
-      .from("tracked_ips")
-      .select(`
-        id,
-        name,
-        aliases,
-        enabled,
-        sort_order
-      `)
-      .eq("enabled", true)
-      .order("sort_order", {
-        ascending: true,
-      });
+async function ensureEventSource(
+  eventId: number,
+  source: SourcePayload
+) {
+  const {
+    data: existing,
+    error: lookupError,
+  } = await supabase
+    .from(
+      "event_sources"
+    )
+    .select("id")
+    .eq(
+      "event_id",
+      eventId
+    )
+    .eq(
+      "source_url",
+      source.source_url
+    )
+    .maybeSingle();
 
-    if (trackedIpError) {
+  if (lookupError) {
+    throw new Error(
+      `event_sources lookup failed: ${lookupError.message}`
+    );
+  }
+
+  if (existing) {
+    return {
+      inserted: false,
+    };
+  }
+
+  const {
+    error: insertError,
+  } = await supabase
+    .from(
+      "event_sources"
+    )
+    .insert({
+      event_id:
+        eventId,
+
+      source_type:
+        source.source_type,
+
+      source_name:
+        source.source_name,
+
+      source_account:
+        null,
+
+      source_url:
+        source.source_url,
+
+      source_title:
+        source.source_title,
+
+      published_at:
+        null,
+
+      raw_data:
+        source.raw_data,
+    });
+
+  if (insertError) {
+    throw new Error(
+      `event_sources insert failed: ${insertError.message}`
+    );
+  }
+
+  return {
+    inserted: true,
+  };
+}
+
+export async function GET(
+  request: Request
+) {
+  try {
+    /*
+     * 1. Security
+     */
+    if (
+      !CRON_SECRET ||
+      !SUPABASE_SECRET_KEY
+    ) {
       return NextResponse.json(
         {
           ok: false,
-          stage:
-            "load_tracked_ips",
           error:
-            trackedIpError.message,
+            "Missing server environment variables.",
         },
         {
           status: 500,
@@ -816,60 +1158,78 @@ export async function GET() {
       );
     }
 
-    const trackedIps =
-      (trackedIpRows ?? []) as TrackedIp[];
-
-    const sourceChecks =
-      await Promise.all(
-        SOURCES.map(
-          async (source) => {
-            try {
-              const {
-                response,
-                html,
-              } =
-                await fetchHtml(
-                  source.url
-                );
-
-              return {
-                name:
-                  source.name,
-                type:
-                  source.type,
-                region:
-                  source.region,
-                ok:
-                  response.ok,
-                status:
-                  response.status,
-                htmlLength:
-                  html.length,
-              };
-            } catch (error) {
-              return {
-                name:
-                  source.name,
-                type:
-                  source.type,
-                region:
-                  source.region,
-                ok: false,
-                status: null,
-                htmlLength: 0,
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "Unknown fetch error",
-              };
-            }
-          }
-        )
+    const authorization =
+      request.headers.get(
+        "authorization"
       );
 
+    if (
+      authorization !==
+      `Bearer ${CRON_SECRET}`
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    /*
+     * 2. Load tracked IPs
+     */
+    const {
+      data:
+        trackedIpRows,
+
+      error:
+        trackedIpError,
+    } = await supabase
+      .from(
+        "tracked_ips"
+      )
+      .select(`
+        id,
+        name,
+        aliases,
+        enabled,
+        sort_order
+      `)
+      .eq(
+        "enabled",
+        true
+      )
+      .order(
+        "sort_order",
+        {
+          ascending:
+            true,
+        }
+      );
+
+    if (
+      trackedIpError
+    ) {
+      throw new Error(
+        `tracked_ips: ${trackedIpError.message}`
+      );
+    }
+
+    const trackedIps =
+      (trackedIpRows ??
+        []) as TrackedIp[];
+
+    /*
+     * 3. Fetch Santora
+     */
     const {
       response:
         santoraResponse,
+
       html:
         santoraHtml,
     } =
@@ -885,6 +1245,7 @@ export async function GET() {
           ok: false,
           stage:
             "fetch_santora",
+
           status:
             santoraResponse.status,
         },
@@ -894,6 +1255,9 @@ export async function GET() {
       );
     }
 
+    /*
+     * 4. Parse
+     */
     const today =
       getTaipeiToday();
 
@@ -904,58 +1268,391 @@ export async function GET() {
         today
       );
 
-    const matchedIps =
-      Array.from(
-        new Set(
-          candidates.map(
-            (item) =>
-              item.ip
-          )
-        )
-      );
+    /*
+     * 5. Insert pending events
+     */
+    let insertedEvents = 0;
+    let existingEvents = 0;
+    let insertedSources = 0;
 
+    const errors: {
+      fingerprint: string;
+      title: string;
+      error: string;
+    }[] = [];
+
+    const results: {
+      eventId:
+        number | null;
+
+      title:
+        string;
+
+      ip:
+        string;
+
+      eventDate:
+        string;
+
+      status:
+        "inserted" |
+        "existing" |
+        "error";
+    }[] = [];
+
+    for (
+      const candidate
+      of candidates
+    ) {
+      try {
+        let eventId:
+          number | null =
+          null;
+
+        /*
+         * fingerprint duplicate check
+         */
+        const {
+          data:
+            existingEvent,
+
+          error:
+            existingError,
+        } = await supabase
+          .from(
+            "events"
+          )
+          .select(
+            "id"
+          )
+          .eq(
+            "fingerprint",
+            candidate.fingerprint
+          )
+          .maybeSingle();
+
+        if (
+          existingError
+        ) {
+          throw new Error(
+            `event lookup: ${existingError.message}`
+          );
+        }
+
+        if (
+          existingEvent
+        ) {
+          eventId =
+            existingEvent.id;
+
+          existingEvents++;
+
+          results.push({
+            eventId,
+
+            title:
+              candidate.title,
+
+            ip:
+              candidate.ip,
+
+            eventDate:
+              candidate.eventDate,
+
+            status:
+              "existing",
+          });
+        } else {
+          const {
+            data:
+              insertedEvent,
+
+            error:
+              insertEventError,
+          } = await supabase
+            .from(
+              "events"
+            )
+            .insert({
+              title:
+                candidate.title,
+
+              canonical_title:
+                candidate.canonicalTitle,
+
+              ip:
+                candidate.ip,
+
+              category:
+                "CONCERT",
+
+              region:
+                candidate.region,
+
+              city:
+                candidate.city,
+
+              venue:
+                null,
+
+              event_date:
+                candidate.eventDate,
+
+              end_date:
+                candidate.endDate,
+
+              fingerprint:
+                candidate.fingerprint,
+
+              status:
+                "pending",
+
+              featured:
+                false,
+
+              primary_source_url:
+                candidate.primarySourceUrl,
+
+              primary_source_type:
+                candidate.primarySourceType,
+
+              auto_detected:
+                true,
+
+              reviewed_at:
+                null,
+
+              description:
+                candidate.sessionHint
+                  ? `場次：${candidate.sessionHint}`
+                  : null,
+            })
+            .select(
+              "id"
+            )
+            .single();
+
+          if (
+            insertEventError
+          ) {
+            throw new Error(
+              `event insert: ${insertEventError.message}`
+            );
+          }
+
+          eventId =
+            insertedEvent.id;
+
+          insertedEvents++;
+
+          results.push({
+            eventId,
+
+            title:
+              candidate.title,
+
+            ip:
+              candidate.ip,
+
+            eventDate:
+              candidate.eventDate,
+
+            status:
+              "inserted",
+          });
+        }
+
+        if (!eventId) {
+          throw new Error(
+            "No event ID returned."
+          );
+        }
+
+        /*
+         * 6. Santora source
+         */
+        const santoraResult =
+          await ensureEventSource(
+            eventId,
+            {
+              source_type:
+                "website",
+
+              source_name:
+                "Santora",
+
+              source_url:
+                SANTORA_URL,
+
+              source_title:
+                candidate.title,
+
+              raw_data: {
+                parser:
+                  "santora-v1",
+
+                ip:
+                  candidate.ip,
+
+                matchedAlias:
+                  candidate.matchedAlias,
+
+                eventDate:
+                  candidate.eventDate,
+
+                endDate:
+                  candidate.endDate,
+
+                region:
+                  candidate.region,
+
+                city:
+                  candidate.city,
+
+                sessionHint:
+                  candidate.sessionHint,
+
+                fingerprint:
+                  candidate.fingerprint,
+              },
+            }
+          );
+
+        if (
+          santoraResult.inserted
+        ) {
+          insertedSources++;
+        }
+
+        /*
+         * 7. Official / ticket / external source
+         *
+         * 如果 primary URL 不是 Santora，
+         * 就另外掛進 event_sources。
+         */
+        if (
+          candidate.primarySourceUrl !==
+          SANTORA_URL
+        ) {
+          const externalResult =
+            await ensureEventSource(
+              eventId,
+              {
+                source_type:
+                  candidate.primarySourceType,
+
+                source_name:
+                  candidate.directSourceLabel ??
+                  "外部活動來源",
+
+                source_url:
+                  candidate.primarySourceUrl,
+
+                source_title:
+                  candidate.title,
+
+                raw_data: {
+                  inherited:
+                    !candidate.directSourceUrl,
+
+                  directSourceLabel:
+                    candidate.directSourceLabel,
+
+                  directSourceUrl:
+                    candidate.directSourceUrl,
+
+                  source:
+                    "Santora parser",
+                },
+              }
+            );
+
+          if (
+            externalResult.inserted
+          ) {
+            insertedSources++;
+          }
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unknown error";
+
+        errors.push({
+          fingerprint:
+            candidate.fingerprint,
+
+          title:
+            candidate.title,
+
+          error:
+            message,
+        });
+
+        results.push({
+          eventId:
+            null,
+
+          title:
+            candidate.title,
+
+          ip:
+            candidate.ip,
+
+          eventDate:
+            candidate.eventDate,
+
+          status:
+            "error",
+        });
+      }
+    }
+
+    /*
+     * 8. Report
+     */
     return NextResponse.json({
-      ok: true,
+      ok:
+        errors.length === 0,
 
       message:
-        "OTAKU LAB final pre-insert parser check completed. No database writes were performed.",
+        "OTAKU LAB event ingestion completed.",
 
       checkedAt:
         new Date().toISOString(),
 
       today,
 
-      trackedIps: {
-        count:
-          trackedIps.length,
-      },
+      source:
+        "Santora",
 
-      sourceChecks,
+      parsedCandidates:
+        candidates.length,
 
-      eventCandidatePreview: {
-        source:
-          "Santora",
+      insertedEvents,
 
-        candidateCount:
-          candidates.length,
+      existingEvents,
 
-        matchedIpCount:
-          matchedIps.length,
+      insertedSources,
 
-        matchedIps,
+      errorCount:
+        errors.length,
 
-        candidates,
-      },
+      errors,
+
+      results,
     });
   } catch (error) {
     console.error(
-      "update-events error:",
+      "update-events fatal error:",
       error
     );
 
     return NextResponse.json(
       {
         ok: false,
+
         error:
           error instanceof Error
             ? error.message
