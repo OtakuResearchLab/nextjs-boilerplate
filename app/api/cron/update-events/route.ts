@@ -41,13 +41,47 @@ type TrackedIp = {
 type EventCandidate = {
   ip: string;
   matchedAlias: string;
+
   eventDate: string;
-  titlePreview: string;
+
+  title: string;
+
+  regionHint: string | null;
+  cityHint: string | null;
+  sessionHint: string | null;
+
+  fingerprintPreview: string;
+
   sourceName: string;
   sourceUrl: string;
   sourceType: string;
-  regionHint: string;
 };
+
+const CITY_RULES = [
+  // 日本
+  { keywords: ["東京"], city: "東京", region: "日本" },
+  { keywords: ["大阪"], city: "大阪", region: "日本" },
+  { keywords: ["兵庫", "神戶", "神戸"], city: "兵庫", region: "日本" },
+  { keywords: ["福岡"], city: "福岡", region: "日本" },
+  { keywords: ["横浜", "橫濱"], city: "橫濱", region: "日本" },
+  { keywords: ["神奈川"], city: "神奈川", region: "日本" },
+  { keywords: ["札幌", "北海道"], city: "札幌", region: "日本" },
+  { keywords: ["名古屋", "愛知"], city: "名古屋", region: "日本" },
+  { keywords: ["京都"], city: "京都", region: "日本" },
+  { keywords: ["広島", "廣島"], city: "廣島", region: "日本" },
+  { keywords: ["仙台", "宮城"], city: "仙台", region: "日本" },
+  { keywords: ["千葉"], city: "千葉", region: "日本" },
+  { keywords: ["埼玉"], city: "埼玉", region: "日本" },
+  { keywords: ["鳥取"], city: "鳥取", region: "日本" },
+
+  // 台灣
+  { keywords: ["台北", "臺北"], city: "台北", region: "台灣" },
+  { keywords: ["新北"], city: "新北", region: "台灣" },
+  { keywords: ["桃園"], city: "桃園", region: "台灣" },
+  { keywords: ["台中", "臺中"], city: "台中", region: "台灣" },
+  { keywords: ["台南", "臺南"], city: "台南", region: "台灣" },
+  { keywords: ["高雄"], city: "高雄", region: "台灣" },
+];
 
 function decodeHtml(text: string) {
   return text
@@ -116,7 +150,9 @@ function aliasMatches(text: string, alias: string) {
 
   if (isShortLatinAlias(normalizedAlias)) {
     const pattern = new RegExp(
-      `(^|[^a-z0-9])${escapeRegExp(normalizedAlias)}([^a-z0-9]|$)`,
+      `(^|[^a-z0-9])${escapeRegExp(
+        normalizedAlias
+      )}([^a-z0-9]|$)`,
       "i"
     );
 
@@ -156,25 +192,135 @@ function normalizeDate(
   month: string,
   day: string
 ) {
-  const mm = month.padStart(2, "0");
-  const dd = day.padStart(2, "0");
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(
+    2,
+    "0"
+  )}`;
+}
 
-  return `${year}-${mm}-${dd}`;
+function getTaipeiToday() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const year =
+    parts.find((part) => part.type === "year")?.value ?? "";
+
+  const month =
+    parts.find((part) => part.type === "month")?.value ?? "";
+
+  const day =
+    parts.find((part) => part.type === "day")?.value ?? "";
+
+  return `${year}-${month}-${day}`;
+}
+
+function detectLocation(text: string) {
+  for (const rule of CITY_RULES) {
+    if (
+      rule.keywords.some((keyword) =>
+        text.includes(keyword)
+      )
+    ) {
+      return {
+        region: rule.region,
+        city: rule.city,
+      };
+    }
+  }
+
+  return {
+    region: null,
+    city: null,
+  };
+}
+
+function extractSessionHint(text: string) {
+  /*
+   * 優先找：
+   * （東京場）
+   * (大阪場)
+   * （兵庫場 DAY1）
+   * 等資訊。
+   */
+  const parentheses =
+    text.match(/[（(]([^（）()]{1,40})[）)]/g) ?? [];
+
+  for (const item of parentheses) {
+    const inner = item
+      .replace(/^[（(]/, "")
+      .replace(/[）)]$/, "")
+      .trim();
+
+    const hasLocation = CITY_RULES.some((rule) =>
+      rule.keywords.some((keyword) =>
+        inner.includes(keyword)
+      )
+    );
+
+    if (hasLocation) {
+      return inner;
+    }
+  }
+
+  return null;
+}
+
+function cleanEventTitle(
+  rawBlock: string,
+  originalDate: string
+) {
+  let title = rawBlock;
+
+  /*
+   * 移除最前面的完整日期。
+   */
+  title = title.replace(originalDate, "");
+
+  /*
+   * 移除常見來源／售票標記以及後面的雜訊。
+   */
+  title = title
+    .replace(
+      /\s*[（(](?:官網|官方|售票網|購票|公式)[^）)]*[）)].*$/i,
+      ""
+    )
+    .replace(/\s+UPCOMING.*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  /*
+   * 安全上限。
+   */
+  return title.slice(0, 180).trim();
+}
+
+function createFingerprintPreview(
+  ip: string,
+  title: string,
+  eventDate: string,
+  city: string | null
+) {
+  const normalizedTitle = normalizeText(title)
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return [
+    normalizeText(ip),
+    normalizedTitle,
+    eventDate,
+    city ? normalizeText(city) : "unknown",
+  ].join("|");
 }
 
 function extractCandidates(
   text: string,
-  trackedIps: TrackedIp[]
+  trackedIps: TrackedIp[],
+  today: string
 ): EventCandidate[] {
-  /*
-   * Santora 正文目前觀察到大量：
-   *
-   * 2026/02/01 活動名稱 ...
-   *
-   * 所以先以 YYYY/MM/DD 作為切割錨點。
-   *
-   * 這一版只產生候選，不寫資料庫。
-   */
   const dateRegex =
     /(20\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})/g;
 
@@ -202,23 +348,33 @@ function extractCandidates(
       day
     );
 
+    /*
+     * 排除過期活動。
+     */
+    if (eventDate < today) {
+      continue;
+    }
+
     const currentStart = match.index;
 
-    /*
-     * 取這個日期到下一個日期之間的文字。
-     *
-     * 如果兩個日期相隔太遠，
-     * 最多只取 500 字，避免吃到下一大段內容。
-     */
+    const nextMatch = dateMatches[i + 1];
+
     const nextStart =
-      i + 1 < dateMatches.length &&
-      dateMatches[i + 1].index !== undefined
-        ? dateMatches[i + 1].index!
+      nextMatch && nextMatch.index !== undefined
+        ? nextMatch.index
         : text.length;
 
+    /*
+     * 關鍵修正：
+     *
+     * 不再往後抓 500 字。
+     * 最多只取 240 字，而且遇到下一個日期立刻停止。
+     *
+     * 避免一個舊日期誤吃到後面其他作品。
+     */
     const end = Math.min(
       nextStart,
-      currentStart + 500
+      currentStart + 240
     );
 
     const block = text
@@ -239,22 +395,35 @@ function extractCandidates(
       continue;
     }
 
-    /*
-     * 目前 titlePreview 暫時保留日期後的整個文字片段。
-     * 下一版再根據實際輸出切成正式 title / venue / city。
-     */
-    const titlePreview = block
-      .replace(dateRegex, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 260);
+    const rawDate = match[0];
 
-    if (!titlePreview) {
+    const title = cleanEventTitle(
+      block,
+      rawDate
+    );
+
+    /*
+     * 太短通常不是有效活動標題。
+     */
+    if (title.length < 6) {
       continue;
     }
 
-    const key =
-      `${ipMatch.ip}|${eventDate}|${titlePreview}`;
+    const location =
+      detectLocation(title);
+
+    const sessionHint =
+      extractSessionHint(title);
+
+    const fingerprintPreview =
+      createFingerprintPreview(
+        ipMatch.ip,
+        title,
+        eventDate,
+        location.city
+      );
+
+    const key = fingerprintPreview;
 
     if (unique.has(key)) {
       continue;
@@ -265,13 +434,21 @@ function extractCandidates(
     candidates.push({
       ip: ipMatch.ip,
       matchedAlias: ipMatch.alias,
+
       eventDate,
-      titlePreview,
+
+      title,
+
+      regionHint: location.region,
+      cityHint: location.city,
+      sessionHint,
+
+      fingerprintPreview,
+
       sourceName: "Santora",
       sourceUrl:
         "https://santora.tw/information-of-live-concert/",
       sourceType: "website",
-      regionHint: "待解析",
     });
   }
 
@@ -338,7 +515,7 @@ export async function GET() {
 
     /*
      * STEP 2
-     * 三個來源健康檢查。
+     * 來源健康檢查。
      */
     const sourceChecks = await Promise.all(
       SOURCES.map(async (source) => {
@@ -400,12 +577,20 @@ export async function GET() {
 
     /*
      * STEP 4
-     * 產生 EventCandidate 預覽。
+     * 使用台灣日期排除過期活動。
+     */
+    const today =
+      getTaipeiToday();
+
+    /*
+     * STEP 5
+     * 產生更乾淨的 EventCandidate。
      */
     const candidates =
       extractCandidates(
         santoraText,
-        trackedIps
+        trackedIps,
+        today
       );
 
     const matchedIps = Array.from(
@@ -420,10 +605,12 @@ export async function GET() {
       ok: true,
 
       message:
-        "OTAKU LAB EventCandidate preview completed. No database writes were performed.",
+        "OTAKU LAB refined EventCandidate preview completed. No database writes were performed.",
 
       checkedAt:
         new Date().toISOString(),
+
+      today,
 
       trackedIps: {
         count: trackedIps.length,
