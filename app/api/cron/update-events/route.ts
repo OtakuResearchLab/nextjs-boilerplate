@@ -67,6 +67,7 @@ type ParsedSantoraItem = {
 };
 
 const CITY_RULES = [
+  // 日本
   { keywords: ["東京"], city: "東京", region: "日本" },
   { keywords: ["大阪"], city: "大阪", region: "日本" },
   { keywords: ["兵庫", "神戶", "神戸"], city: "兵庫", region: "日本" },
@@ -82,12 +83,27 @@ const CITY_RULES = [
   { keywords: ["埼玉"], city: "埼玉", region: "日本" },
   { keywords: ["鳥取"], city: "鳥取", region: "日本" },
 
+  // 台灣
   { keywords: ["台北", "臺北"], city: "台北", region: "台灣" },
   { keywords: ["新北"], city: "新北", region: "台灣" },
   { keywords: ["桃園"], city: "桃園", region: "台灣" },
   { keywords: ["台中", "臺中"], city: "台中", region: "台灣" },
   { keywords: ["台南", "臺南"], city: "台南", region: "台灣" },
   { keywords: ["高雄"], city: "高雄", region: "台灣" },
+];
+
+const URL_REGION_RULES = [
+  {
+    region: "台灣",
+    domains: [
+      "ibon.com.tw",
+      "ticket.ibon.com.tw",
+      "tixcraft.com",
+      "opentix.life",
+      "kktix.com",
+      "famiticket.com.tw",
+    ],
+  },
 ];
 
 function decodeHtml(text: string) {
@@ -140,7 +156,9 @@ function aliasMatches(text: string, alias: string) {
 
   if (isShortLatinAlias(normalizedAlias)) {
     const pattern = new RegExp(
-      `(^|[^a-z0-9])${escapeRegExp(normalizedAlias)}([^a-z0-9]|$)`,
+      `(^|[^a-z0-9])${escapeRegExp(
+        normalizedAlias
+      )}([^a-z0-9]|$)`,
       "i"
     );
 
@@ -200,19 +218,10 @@ function normalizeDate(
   month: string,
   day: string
 ) {
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(
-    2,
-    "0"
-  )}`;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
 function parseDateAtStart(text: string) {
-  /*
-   * 支援：
-   * 2026/09/22
-   * 2026/06/05-07
-   * 2026/07/18~20
-   */
   const match = text.match(
     /^\s*(20\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:\s*[-~～]\s*(\d{1,2}))?/
   );
@@ -239,10 +248,7 @@ function parseDateAtStart(text: string) {
   };
 }
 
-function detectLocation(
-  text: string,
-  sectionRegion: string | null
-) {
+function detectCityAndRegionFromText(text: string) {
   for (const rule of CITY_RULES) {
     if (
       rule.keywords.some((keyword) =>
@@ -254,6 +260,68 @@ function detectLocation(
         city: rule.city,
       };
     }
+  }
+
+  return {
+    region: null,
+    city: null,
+  };
+}
+
+function detectRegionFromUrl(url: string | null) {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    for (const rule of URL_REGION_RULES) {
+      if (
+        rule.domains.some(
+          (domain) =>
+            hostname === domain ||
+            hostname.endsWith(`.${domain}`)
+        )
+      ) {
+        return rule.region;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function resolveLocation(
+  text: string,
+  directSourceUrl: string | null,
+  sectionRegion: string | null
+) {
+  /*
+   * 優先順序：
+   *
+   * 1. 活動文字中的明確城市
+   * 2. 外部來源網址推斷地區
+   * 3. Santora 區段作 fallback
+   */
+
+  const fromText =
+    detectCityAndRegionFromText(text);
+
+  if (fromText.city || fromText.region) {
+    return fromText;
+  }
+
+  const fromUrl =
+    detectRegionFromUrl(directSourceUrl);
+
+  if (fromUrl) {
+    return {
+      region: fromUrl,
+      city: null,
+    };
   }
 
   return {
@@ -375,17 +443,6 @@ function cleanTitle(
 ) {
   return text
     .replace(rawDate, "")
-    /*
-     * 移除 Santora 自己附在尾端的：
-     * （官網）
-     * （售票網）
-     * （網頁公告）
-     * （登記抽選）
-     *
-     * 但保留：
-     * （東京場）
-     * （兵庫場）
-     */
     .replace(
       /[（(]\s*(?:官網|官方|公式|售票網|購票|網頁公告|公告|登記抽選|抽選)\s*[）)]/gi,
       ""
@@ -396,9 +453,6 @@ function cleanTitle(
 
 function createCanonicalTitle(title: string) {
   return normalizeText(title)
-    /*
-     * 去掉城市場次，方便同巡演繼承來源 URL。
-     */
     .replace(
       /[（(][^（）()]*(?:東京|大阪|兵庫|神戶|神戸|福岡|橫濱|横浜|札幌|北海道|名古屋|愛知|京都|廣島|広島|仙台|宮城|鳥取|台北|臺北|台中|臺中|台南|臺南|高雄)[^（）()]*[）)]/g,
       " "
@@ -450,13 +504,6 @@ function parseSantoraItems(
   trackedIps: TrackedIp[],
   today: string
 ): ParsedSantoraItem[] {
-  /*
-   * 用 heading + li 順序掃描。
-   *
-   * 目的：
-   * 1. 知道目前處於「台灣」還是「日本」
-   * 2. 每個 <li> 就是一筆活動，不再用固定字數切割
-   */
   const tokenRegex =
     /<(h4|li)\b[^>]*>([\s\S]*?)<\/\1>/gi;
 
@@ -471,6 +518,8 @@ function parseSantoraItems(
 
     eventDate: string;
     endDate: string | null;
+
+    sectionRegion: string | null;
 
     region: string | null;
     city: string | null;
@@ -501,10 +550,6 @@ function parseSantoraItems(
         heading.includes("轉播") ||
         heading.includes("其他")
       ) {
-        /*
-         * 不處理「轉播&其他」，
-         * 避免把公告或尚未確定場次當正式活動。
-         */
         currentRegion = null;
       }
 
@@ -515,9 +560,6 @@ function parseSantoraItems(
       continue;
     }
 
-    /*
-     * 只有台灣 / 日本正式活動區塊才解析。
-     */
     if (!currentRegion) {
       continue;
     }
@@ -531,9 +573,6 @@ function parseSantoraItems(
       continue;
     }
 
-    /*
-     * 已完全結束的活動不要進候選。
-     */
     const effectiveEnd =
       dateInfo.endDate ??
       dateInfo.eventDate;
@@ -564,20 +603,21 @@ function parseSantoraItems(
     const canonicalTitle =
       createCanonicalTitle(title);
 
-    const location =
-      detectLocation(
-        title,
-        currentRegion
-      );
-
-    const sessionHint =
-      extractSessionHint(title);
-
     const links =
       extractLinks(innerHtml);
 
     const bestSource =
       chooseBestDirectSource(links);
+
+    const location =
+      resolveLocation(
+        title,
+        bestSource?.url ?? null,
+        currentRegion
+      );
+
+    const sessionHint =
+      extractSessionHint(title);
 
     allMatchedItems.push({
       ip: ipMatch.ip,
@@ -591,6 +631,9 @@ function parseSantoraItems(
         dateInfo.eventDate,
       endDate:
         dateInfo.endDate,
+
+      sectionRegion:
+        currentRegion,
 
       region:
         location.region,
@@ -607,10 +650,7 @@ function parseSantoraItems(
   }
 
   /*
-   * 第一輪：
-   * 收集「同一巡演」曾出現過的官方 / 售票 URL。
-   *
-   * key = IP + canonicalTitle
+   * 收集同系列來源網址。
    */
   const inheritedSources =
     new Map<
@@ -639,10 +679,6 @@ function parseSantoraItems(
     }
   }
 
-  /*
-   * 第二輪：
-   * 沒直接 URL 的場次，嘗試繼承同系列來源。
-   */
   const result: ParsedSantoraItem[] = [];
 
   const unique = new Set<string>();
@@ -666,12 +702,34 @@ function parseSantoraItems(
           ? `inherited:${inherited.label ?? "external"}`
           : "Santora";
 
+    /*
+     * 如果原本沒有 city，而且這一筆是靠繼承來源取得 URL，
+     * 再用最後 primarySourceUrl 補一次 region。
+     */
+    let finalRegion =
+      item.region;
+
+    let finalCity =
+      item.city;
+
+    if (!finalCity) {
+      const regionFromPrimary =
+        detectRegionFromUrl(
+          primarySourceUrl
+        );
+
+      if (regionFromPrimary) {
+        finalRegion =
+          regionFromPrimary;
+      }
+    }
+
     const fingerprintPreview =
       createFingerprint(
         item.ip,
         item.canonicalTitle,
         item.eventDate,
-        item.city
+        finalCity
       );
 
     if (
@@ -685,7 +743,31 @@ function parseSantoraItems(
     );
 
     result.push({
-      ...item,
+      ip: item.ip,
+      matchedAlias:
+        item.matchedAlias,
+
+      title:
+        item.title,
+      canonicalTitle:
+        item.canonicalTitle,
+
+      eventDate:
+        item.eventDate,
+      endDate:
+        item.endDate,
+
+      region:
+        finalRegion,
+      city:
+        finalCity,
+      sessionHint:
+        item.sessionHint,
+
+      directSourceLabel:
+        item.directSourceLabel,
+      directSourceUrl:
+        item.directSourceUrl,
 
       primarySourceUrl,
       primarySourceType,
@@ -702,10 +784,6 @@ function parseSantoraItems(
 
 export async function GET() {
   try {
-    /*
-     * STEP 1
-     * tracked_ips
-     */
     const {
       data: trackedIpRows,
       error: trackedIpError,
@@ -741,10 +819,6 @@ export async function GET() {
     const trackedIps =
       (trackedIpRows ?? []) as TrackedIp[];
 
-    /*
-     * STEP 2
-     * 三來源健康檢查。
-     */
     const sourceChecks =
       await Promise.all(
         SOURCES.map(
@@ -793,10 +867,6 @@ export async function GET() {
         )
       );
 
-    /*
-     * STEP 3
-     * Santora
-     */
     const {
       response:
         santoraResponse,
@@ -848,7 +918,7 @@ export async function GET() {
       ok: true,
 
       message:
-        "OTAKU LAB structured Santora parser completed. No database writes were performed.",
+        "OTAKU LAB final pre-insert parser check completed. No database writes were performed.",
 
       checkedAt:
         new Date().toISOString(),
@@ -863,7 +933,8 @@ export async function GET() {
       sourceChecks,
 
       eventCandidatePreview: {
-        source: "Santora",
+        source:
+          "Santora",
 
         candidateCount:
           candidates.length,
