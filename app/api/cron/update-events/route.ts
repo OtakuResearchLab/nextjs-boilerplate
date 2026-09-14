@@ -38,10 +38,15 @@ type TrackedIp = {
   sort_order: number;
 };
 
-type ContextMatch = {
-  matchedIp: string;
+type EventCandidate = {
+  ip: string;
   matchedAlias: string;
-  context: string;
+  eventDate: string;
+  titlePreview: string;
+  sourceName: string;
+  sourceUrl: string;
+  sourceType: string;
+  regionHint: string;
 };
 
 function decodeHtml(text: string) {
@@ -70,7 +75,10 @@ function htmlToText(html: string) {
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
       .replace(/<!--[\s\S]*?-->/g, " ")
-      .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|section|article)>/gi, "\n")
+      .replace(
+        /<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|section|article)>/gi,
+        "\n"
+      )
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<[^>]+>/g, " ")
       .replace(/\r/g, "")
@@ -98,120 +106,176 @@ function isShortLatinAlias(alias: string) {
   return /^[a-z0-9]+$/i.test(alias) && alias.length <= 4;
 }
 
-function findAliasPositions(text: string, alias: string) {
-  const positions: number[] = [];
-
+function aliasMatches(text: string, alias: string) {
   const normalizedText = normalizeText(text);
   const normalizedAlias = normalizeText(alias);
 
   if (!normalizedAlias) {
-    return positions;
+    return false;
   }
 
   if (isShortLatinAlias(normalizedAlias)) {
     const pattern = new RegExp(
-      `(^|[^a-z0-9])(${escapeRegExp(normalizedAlias)})(?=[^a-z0-9]|$)`,
-      "gi"
+      `(^|[^a-z0-9])${escapeRegExp(normalizedAlias)}([^a-z0-9]|$)`,
+      "i"
     );
 
-    let match;
-
-    while ((match = pattern.exec(normalizedText)) !== null) {
-      const prefixLength = match[1]?.length ?? 0;
-      positions.push(match.index + prefixLength);
-
-      if (match.index === pattern.lastIndex) {
-        pattern.lastIndex++;
-      }
-    }
-
-    return positions;
+    return pattern.test(normalizedText);
   }
 
-  let startIndex = 0;
-
-  while (true) {
-    const index = normalizedText.indexOf(
-      normalizedAlias,
-      startIndex
-    );
-
-    if (index === -1) {
-      break;
-    }
-
-    positions.push(index);
-    startIndex = index + normalizedAlias.length;
-  }
-
-  return positions;
+  return normalizedText.includes(normalizedAlias);
 }
 
-function createContext(
-  text: string,
-  position: number,
-  aliasLength: number
-) {
-  const radius = 350;
-
-  const start = Math.max(0, position - radius);
-  const end = Math.min(
-    text.length,
-    position + aliasLength + radius
-  );
-
-  return text
-    .slice(start, end)
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function scanTrackedIps(
+function findIpMatch(
   text: string,
   trackedIps: TrackedIp[]
-): ContextMatch[] {
-  const normalizedFullText = normalizeText(text);
-
-  const matches: ContextMatch[] = [];
-  const unique = new Set<string>();
-
+): {
+  ip: string;
+  alias: string;
+} | null {
   for (const ip of trackedIps) {
     const aliases = Array.from(
       new Set([ip.name, ...(ip.aliases ?? [])])
     ).sort((a, b) => b.length - a.length);
 
     for (const alias of aliases) {
-      const positions = findAliasPositions(
-        normalizedFullText,
-        alias
-      );
-
-      for (const position of positions.slice(0, 5)) {
-        const context = createContext(
-          normalizedFullText,
-          position,
-          normalizeText(alias).length
-        );
-
-        const key =
-          `${ip.name}|${alias}|${context}`;
-
-        if (unique.has(key)) {
-          continue;
-        }
-
-        unique.add(key);
-
-        matches.push({
-          matchedIp: ip.name,
-          matchedAlias: alias,
-          context,
-        });
+      if (aliasMatches(text, alias)) {
+        return {
+          ip: ip.name,
+          alias,
+        };
       }
     }
   }
 
-  return matches.slice(0, 100);
+  return null;
+}
+
+function normalizeDate(
+  year: string,
+  month: string,
+  day: string
+) {
+  const mm = month.padStart(2, "0");
+  const dd = day.padStart(2, "0");
+
+  return `${year}-${mm}-${dd}`;
+}
+
+function extractCandidates(
+  text: string,
+  trackedIps: TrackedIp[]
+): EventCandidate[] {
+  /*
+   * Santora 正文目前觀察到大量：
+   *
+   * 2026/02/01 活動名稱 ...
+   *
+   * 所以先以 YYYY/MM/DD 作為切割錨點。
+   *
+   * 這一版只產生候選，不寫資料庫。
+   */
+  const dateRegex =
+    /(20\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})/g;
+
+  const dateMatches = Array.from(
+    text.matchAll(dateRegex)
+  );
+
+  const candidates: EventCandidate[] = [];
+  const unique = new Set<string>();
+
+  for (let i = 0; i < dateMatches.length; i++) {
+    const match = dateMatches[i];
+
+    if (match.index === undefined) {
+      continue;
+    }
+
+    const year = match[1];
+    const month = match[2];
+    const day = match[3];
+
+    const eventDate = normalizeDate(
+      year,
+      month,
+      day
+    );
+
+    const currentStart = match.index;
+
+    /*
+     * 取這個日期到下一個日期之間的文字。
+     *
+     * 如果兩個日期相隔太遠，
+     * 最多只取 500 字，避免吃到下一大段內容。
+     */
+    const nextStart =
+      i + 1 < dateMatches.length &&
+      dateMatches[i + 1].index !== undefined
+        ? dateMatches[i + 1].index!
+        : text.length;
+
+    const end = Math.min(
+      nextStart,
+      currentStart + 500
+    );
+
+    const block = text
+      .slice(currentStart, end)
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!block) {
+      continue;
+    }
+
+    const ipMatch = findIpMatch(
+      block,
+      trackedIps
+    );
+
+    if (!ipMatch) {
+      continue;
+    }
+
+    /*
+     * 目前 titlePreview 暫時保留日期後的整個文字片段。
+     * 下一版再根據實際輸出切成正式 title / venue / city。
+     */
+    const titlePreview = block
+      .replace(dateRegex, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 260);
+
+    if (!titlePreview) {
+      continue;
+    }
+
+    const key =
+      `${ipMatch.ip}|${eventDate}|${titlePreview}`;
+
+    if (unique.has(key)) {
+      continue;
+    }
+
+    unique.add(key);
+
+    candidates.push({
+      ip: ipMatch.ip,
+      matchedAlias: ipMatch.alias,
+      eventDate,
+      titlePreview,
+      sourceName: "Santora",
+      sourceUrl:
+        "https://santora.tw/information-of-live-concert/",
+      sourceType: "website",
+      regionHint: "待解析",
+    });
+  }
+
+  return candidates.slice(0, 100);
 }
 
 async function fetchHtml(url: string) {
@@ -237,7 +301,7 @@ export async function GET() {
   try {
     /*
      * STEP 1
-     * 讀取目前啟用中的監測 IP。
+     * 讀取 tracked_ips。
      */
     const {
       data: trackedIpRows,
@@ -252,7 +316,9 @@ export async function GET() {
         sort_order
       `)
       .eq("enabled", true)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", {
+        ascending: true,
+      });
 
     if (trackedIpError) {
       return NextResponse.json(
@@ -272,7 +338,7 @@ export async function GET() {
 
     /*
      * STEP 2
-     * 確認三個來源目前仍可連線。
+     * 三個來源健康檢查。
      */
     const sourceChecks = await Promise.all(
       SOURCES.map(async (source) => {
@@ -307,10 +373,7 @@ export async function GET() {
 
     /*
      * STEP 3
-     * 把 Santora HTML 轉成正文文字。
-     *
-     * 目前目的不是建立活動，
-     * 而是觀察監測 IP 在正文附近的資料結構。
+     * Santora 正文。
      */
     const santora = SOURCES[0];
 
@@ -337,22 +400,18 @@ export async function GET() {
 
     /*
      * STEP 4
-     * 掃描正文中所有 tracked_ips aliases。
+     * 產生 EventCandidate 預覽。
      */
-    const contextMatches =
-      scanTrackedIps(
+    const candidates =
+      extractCandidates(
         santoraText,
         trackedIps
       );
 
-    /*
-     * STEP 5
-     * 統計哪些 IP 有被 Santora 正文提到。
-     */
-    const matchedIpSummary = Array.from(
+    const matchedIps = Array.from(
       new Set(
-        contextMatches.map(
-          (item) => item.matchedIp
+        candidates.map(
+          (candidate) => candidate.ip
         )
       )
     );
@@ -361,9 +420,10 @@ export async function GET() {
       ok: true,
 
       message:
-        "OTAKU LAB Santora body scan completed. No database writes were performed.",
+        "OTAKU LAB EventCandidate preview completed. No database writes were performed.",
 
-      checkedAt: new Date().toISOString(),
+      checkedAt:
+        new Date().toISOString(),
 
       trackedIps: {
         count: trackedIps.length,
@@ -371,20 +431,18 @@ export async function GET() {
 
       sourceChecks,
 
-      santoraBodyScan: {
-        textLength: santoraText.length,
+      eventCandidatePreview: {
+        source: "Santora",
+
+        candidateCount:
+          candidates.length,
 
         matchedIpCount:
-          matchedIpSummary.length,
+          matchedIps.length,
 
-        matchedIps:
-          matchedIpSummary,
+        matchedIps,
 
-        contextMatchCount:
-          contextMatches.length,
-
-        matches:
-          contextMatches,
+        candidates,
       },
     });
   } catch (error) {
