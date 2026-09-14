@@ -51,8 +51,22 @@ export default async function PartnersPanel() {
               null;
 
             const content = (
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                {/* Partner Avatar */}
+                {partner.avatar_url ? (
+                  <img
+                    src={partner.avatar_url}
+                    alt={`${partner.name} 頭像`}
+                    className="h-11 w-11 shrink-0 rounded-full border border-[#dedbd5] object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#edf1f3] text-sm font-black text-[#7890a3]">
+                    {partner.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                {/* Partner Info */}
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-black text-[#263746]">
                     {partner.name}
                   </p>
@@ -64,6 +78,7 @@ export default async function PartnersPanel() {
                   )}
                 </div>
 
+                {/* Link */}
                 {primaryUrl && (
                   <span className="shrink-0 text-xs font-bold text-[#7890a3]">
                     前往 →
@@ -78,14 +93,14 @@ export default async function PartnersPanel() {
                 href={primaryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-[#e4e1dc] p-4 transition hover:border-[#aebdc7] hover:bg-[#f8fafb]"
+                className="block rounded-xl border border-[#e4e1dc] p-3 transition hover:border-[#aebdc7] hover:bg-[#f8fafb]"
               >
                 {content}
               </a>
             ) : (
               <div
                 key={partner.id}
-                className="rounded-xl border border-[#e4e1dc] p-4"
+                className="rounded-xl border border-[#e4e1dc] p-3"
               >
                 {content}
               </div>
