@@ -58,10 +58,10 @@ export default async function EventsPage() {
     .order("event_date", { ascending: true });
 
   return (
-    <main className="min-h-screen bg-[#f7f5f1] text-[#263746]">
+    <main className="flex min-h-screen flex-col bg-[#f7f5f1] text-[#263746]">
       <SiteHeader />
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-8 md:px-8">
+      <section className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 md:px-8">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
@@ -191,7 +191,7 @@ export default async function EventsPage() {
         )}
       </section>
 
-      <footer className="bg-[#263746] px-5 py-3 text-center text-[11px] tracking-wider text-[#aebac3]">
+      <footer className="mt-auto bg-[#263746] px-5 py-3 text-center text-[11px] tracking-wider text-[#aebac3]">
         © 2026 OTAKU LAB · 宅研所
       </footer>
     </main>
