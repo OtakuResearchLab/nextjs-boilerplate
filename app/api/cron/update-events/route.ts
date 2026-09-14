@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+);
 
 const SOURCES = [
   {
@@ -46,6 +52,26 @@ const EVENT_KEYWORDS = [
   "コラボ",
 ];
 
+type TrackedIp = {
+  id: number;
+  name: string;
+  aliases: string[];
+  enabled: boolean;
+  sort_order: number;
+};
+
+type LinkItem = {
+  title: string;
+  url: string;
+};
+
+type MatchedCandidate = {
+  title: string;
+  url: string;
+  matchedIp: string;
+  matchedAlias: string;
+};
+
 function decodeHtml(text: string) {
   return text
     .replace(/&nbsp;/g, " ")
@@ -75,11 +101,8 @@ function toAbsoluteUrl(href: string, baseUrl: string) {
   }
 }
 
-function extractLinks(html: string, baseUrl: string) {
-  const results: {
-    title: string;
-    url: string;
-  }[] = [];
+function extractLinks(html: string, baseUrl: string): LinkItem[] {
+  const results: LinkItem[] = [];
 
   const anchorRegex =
     /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
@@ -107,9 +130,91 @@ function extractLinks(html: string, baseUrl: string) {
 }
 
 function looksLikeEvent(title: string) {
+  const lowerTitle = title.toLowerCase();
+
   return EVENT_KEYWORDS.some((keyword) =>
-    title.toLowerCase().includes(keyword.toLowerCase())
+    lowerTitle.includes(keyword.toLowerCase())
   );
+}
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeText(text: string) {
+  return text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/*
+ * 短縮寫不能直接 includes。
+ *
+ * 例如：
+ * FF
+ * EVA
+ * ZZZ
+ * NTE
+ * WOW
+ *
+ * 需要完整單字邊界，避免：
+ * OFFICIAL → FF
+ * SHOWCASE → WOW
+ * 之類的誤判。
+ */
+function isShortLatinAlias(alias: string) {
+  return /^[a-z0-9]+$/i.test(alias) && alias.length <= 4;
+}
+
+function aliasMatches(text: string, alias: string) {
+  const normalizedText = normalizeText(text);
+  const normalizedAlias = normalizeText(alias);
+
+  if (!normalizedAlias) {
+    return false;
+  }
+
+  if (isShortLatinAlias(normalizedAlias)) {
+    const pattern = new RegExp(
+      `(^|[^a-z0-9])${escapeRegExp(normalizedAlias)}([^a-z0-9]|$)`,
+      "i"
+    );
+
+    return pattern.test(normalizedText);
+  }
+
+  return normalizedText.includes(normalizedAlias);
+}
+
+function findTrackedIpMatch(
+  text: string,
+  trackedIps: TrackedIp[]
+): {
+  matchedIp: string;
+  matchedAlias: string;
+} | null {
+  /*
+   * 優先比對較長 alias。
+   * 避免短名稱先命中造成分類不精確。
+   */
+  for (const ip of trackedIps) {
+    const aliases = Array.from(
+      new Set([ip.name, ...(ip.aliases ?? [])])
+    ).sort((a, b) => b.length - a.length);
+
+    for (const alias of aliases) {
+      if (aliasMatches(text, alias)) {
+        return {
+          matchedIp: ip.name,
+          matchedAlias: alias,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 async function fetchHtml(url: string) {
@@ -135,7 +240,43 @@ export async function GET() {
   try {
     /*
      * STEP 1
-     * 先確認三個來源依然能正常取得。
+     * 從 Supabase 讀取啟用中的監測 IP。
+     *
+     * 目前只 SELECT，不會寫資料。
+     */
+    const {
+      data: trackedIpRows,
+      error: trackedIpError,
+    } = await supabase
+      .from("tracked_ips")
+      .select(`
+        id,
+        name,
+        aliases,
+        enabled,
+        sort_order
+      `)
+      .eq("enabled", true)
+      .order("sort_order", { ascending: true });
+
+    if (trackedIpError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          stage: "load_tracked_ips",
+          error: trackedIpError.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const trackedIps = (trackedIpRows ?? []) as TrackedIp[];
+
+    /*
+     * STEP 2
+     * 確認目前三個來源能否正常取得。
      */
     const sourceChecks = await Promise.all(
       SOURCES.map(async (source) => {
@@ -168,19 +309,29 @@ export async function GET() {
     );
 
     /*
-     * STEP 2
-     * 第一階段只解析 Santora。
-     * 目前只是預覽，不會寫入 Supabase。
+     * STEP 3
+     * 目前只正式分析 Santora。
+     *
+     * 流程：
+     * HTML
+     * ↓
+     * 所有連結
+     * ↓
+     * 活動關鍵字
+     * ↓
+     * tracked_ips aliases
+     * ↓
+     * 只留下有命中 IP 的候選
      */
     const santora = SOURCES[0];
 
-    const { response: santoraResponse, html: santoraHtml } =
-      await fetchHtml(santora.url);
+    const {
+      response: santoraResponse,
+      html: santoraHtml,
+    } = await fetchHtml(santora.url);
 
-    let santoraCandidates: {
-      title: string;
-      url: string;
-    }[] = [];
+    let rawEventCandidates: LinkItem[] = [];
+    let matchedCandidates: MatchedCandidate[] = [];
 
     if (santoraResponse.ok) {
       const allLinks = extractLinks(
@@ -188,12 +339,9 @@ export async function GET() {
         santora.url
       );
 
-      const uniqueMap = new Map<
+      const rawUniqueMap = new Map<
         string,
-        {
-          title: string;
-          url: string;
-        }
+        LinkItem
       >();
 
       for (const item of allLinks) {
@@ -203,32 +351,90 @@ export async function GET() {
 
         const key = `${item.title}|${item.url}`;
 
-        if (!uniqueMap.has(key)) {
-          uniqueMap.set(key, item);
+        if (!rawUniqueMap.has(key)) {
+          rawUniqueMap.set(key, item);
         }
       }
 
-      santoraCandidates = Array.from(
-        uniqueMap.values()
-      ).slice(0, 30);
+      rawEventCandidates = Array.from(
+        rawUniqueMap.values()
+      );
+
+      const matchedUniqueMap = new Map<
+        string,
+        MatchedCandidate
+      >();
+
+      for (const item of rawEventCandidates) {
+        const match = findTrackedIpMatch(
+          item.title,
+          trackedIps
+        );
+
+        if (!match) {
+          continue;
+        }
+
+        const candidate: MatchedCandidate = {
+          title: item.title,
+          url: item.url,
+          matchedIp: match.matchedIp,
+          matchedAlias: match.matchedAlias,
+        };
+
+        const key =
+          `${candidate.matchedIp}|` +
+          `${candidate.title}|` +
+          `${candidate.url}`;
+
+        if (!matchedUniqueMap.has(key)) {
+          matchedUniqueMap.set(
+            key,
+            candidate
+          );
+        }
+      }
+
+      matchedCandidates = Array.from(
+        matchedUniqueMap.values()
+      ).slice(0, 50);
     }
 
     return NextResponse.json({
       ok: true,
+
       message:
-        "OTAKU LAB event parser preview completed. No database writes were performed.",
+        "OTAKU LAB tracked IP parser preview completed. No database writes were performed.",
+
       checkedAt: new Date().toISOString(),
+
+      trackedIps: {
+        count: trackedIps.length,
+        items: trackedIps.map((ip) => ({
+          name: ip.name,
+          aliases: ip.aliases,
+        })),
+      },
 
       sourceChecks,
 
       parserPreview: {
         source: "Santora",
-        candidateCount: santoraCandidates.length,
-        candidates: santoraCandidates,
+
+        rawEventCandidateCount:
+          rawEventCandidates.length,
+
+        matchedCandidateCount:
+          matchedCandidates.length,
+
+        matchedCandidates,
       },
     });
   } catch (error) {
-    console.error("update-events error:", error);
+    console.error(
+      "update-events error:",
+      error
+    );
 
     return NextResponse.json(
       {
