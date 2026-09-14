@@ -1,0 +1,123 @@
+.admin-shell {
+  min-height: 100vh;
+  background: #f7f5f1;
+  color: #263746;
+}
+
+.admin-header {
+  border-bottom: 1px solid #dedbd5;
+  background: #ffffff;
+}
+
+.admin-card {
+  border: 1px solid #dedbd5;
+  background: #ffffff;
+  color: #263746;
+}
+
+.admin-input {
+  width: 100%;
+  border: 1px solid #d8d7d2;
+  background: #fbfaf8;
+  color: #263746;
+  outline: none;
+}
+
+.admin-input::placeholder {
+  color: #99a4ac;
+}
+
+.admin-input:focus {
+  border-color: #7f9db4;
+  box-shadow: 0 0 0 2px #dce7ee;
+}
+
+.admin-button {
+  background: #263746;
+  color: #ffffff;
+}
+
+.admin-button:hover {
+  opacity: 0.9;
+}
+
+.admin-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #88a1b4;
+}
+
+.admin-muted {
+  color: #71828e;
+}
+
+.admin-link {
+  color: #52799a;
+}
+
+.admin-disabled {
+  color: #a1abb2;
+}
+
+/* =========================
+   Dark Mode
+   ========================= */
+
+html.dark .admin-shell {
+  background: #17222c;
+  color: #e7edf1;
+}
+
+html.dark .admin-header {
+  border-color: #344552;
+  background: #202e39;
+}
+
+html.dark .admin-card {
+  border-color: #344552;
+  background: #202e39;
+  color: #e7edf1;
+}
+
+html.dark .admin-input {
+  border-color: #40525f;
+  background: #182630;
+  color: #e7edf1;
+}
+
+html.dark .admin-input::placeholder {
+  color: #7f909c;
+}
+
+html.dark .admin-input:focus {
+  border-color: #7895aa;
+  box-shadow: 0 0 0 2px #314755;
+}
+
+html.dark .admin-button {
+  background: #d7e2e9;
+  color: #263746;
+}
+
+html.dark .admin-eyebrow {
+  color: #8da8bb;
+}
+
+html.dark .admin-muted {
+  color: #9babb6;
+}
+
+html.dark .admin-link {
+  color: #9fc0d8;
+}
+
+html.dark .admin-disabled {
+  color: #71818c;
+}
+
+html.dark .admin-login-error {
+  border-color: #7f3d45;
+  background: #3b2228;
+  color: #ffb8c0;
+}
