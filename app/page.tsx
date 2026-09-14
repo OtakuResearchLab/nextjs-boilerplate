@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import SiteHeader from "./SiteHeader";
 import HomeFilter from "./HomeFilter";
+import ActivityPanel from "./ActivityPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -94,9 +95,7 @@ function ProductCard({
         </Link>
 
         {product.category && (
-          <p className="mt-1 text-xs text-[#8b989f]">
-            {product.category}
-          </p>
+          <p className="mt-1 text-xs text-[#8b989f]">{product.category}</p>
         )}
 
         <p
@@ -309,53 +308,7 @@ export default async function Home() {
           <aside className="space-y-6">
 
             {/* Events */}
-            <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#88a1b4]">
-                EVENTS
-              </p>
-
-              <div className="flex items-center justify-between">
-                <h2 className="mt-1 text-xl font-black">
-                  相關活動資訊
-                </h2>
-
-                <span className="text-xs text-[#88a1b4]">
-                  MORE →
-                </span>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
-                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
-                    EVENT
-                  </span>
-
-                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
-                    國內 ACG 活動
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
-                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
-                    OVERSEAS
-                  </span>
-
-                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
-                    海外相關活動
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[#e3e1dc] bg-[#faf9f6] p-3">
-                  <span className="text-[10px] font-bold tracking-wider text-[#88a1b4]">
-                    CONCERT
-                  </span>
-
-                  <p className="mt-1 text-sm font-bold text-[#526b7d]">
-                    ACG 音樂會
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ActivityPanel />
 
             {/* Partners */}
             <div className="rounded-[22px] border border-[#dedbd5] bg-white p-5">
