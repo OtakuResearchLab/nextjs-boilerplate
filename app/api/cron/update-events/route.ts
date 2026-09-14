@@ -47,6 +47,7 @@ type ParsedSantoraItem = {
 
   region: string | null;
   city: string | null;
+  venue: string | null;
   sessionHint: string | null;
 
   directSourceLabel: string | null;
@@ -661,6 +662,175 @@ function sourceTypeFromLabel(
   return "external";
 }
 
+function normalizeVenueCandidate(
+  value: string | null | undefined,
+  city: string | null
+) {
+  if (!value) {
+    return null;
+  }
+
+  const cleaned = decodeHtml(value)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[：:\-–—・|\s]+/, "")
+    .replace(/[|\s]+$/, "")
+    .trim();
+
+  if (cleaned.length < 2 || cleaned.length > 100) {
+    return null;
+  }
+
+  if (city && cleaned === city) {
+    return null;
+  }
+
+  if (/^(?:会場|會場|場地|場館|地點|地点|venue|未定|tba|tbd)$/i.test(cleaned)) {
+    return null;
+  }
+
+  if (/(?:チケット|ticket|料金|票價|票价|発売|售票|購票|開演|開場|日期|日時|date)/i.test(cleaned)) {
+    return null;
+  }
+
+  return cleaned;
+}
+
+function venueFromJsonLd(
+  html: string,
+  city: string | null
+) {
+  const scriptRegex =
+    /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+
+  const candidates: string[] = [];
+
+  const visit = (value: unknown) => {
+    if (!value) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        visit(item);
+      }
+      return;
+    }
+
+    if (typeof value !== "object") {
+      return;
+    }
+
+    const obj = value as Record<string, unknown>;
+    const location = obj.location;
+
+    if (typeof location === "string") {
+      candidates.push(location);
+    } else if (location && typeof location === "object") {
+      const locationObj = location as Record<string, unknown>;
+      if (typeof locationObj.name === "string") {
+        candidates.push(locationObj.name);
+      }
+    }
+
+    if (obj["@graph"]) {
+      visit(obj["@graph"]);
+    }
+  };
+
+  let match;
+
+  while ((match = scriptRegex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(decodeHtml(match[1]).trim());
+      visit(parsed);
+    } catch {
+      // Ignore malformed JSON-LD blocks.
+    }
+  }
+
+  for (const candidate of candidates) {
+    const venue = normalizeVenueCandidate(candidate, city);
+    if (venue) {
+      return venue;
+    }
+  }
+
+  return null;
+}
+
+function venueFromLabeledText(
+  html: string,
+  city: string | null
+) {
+  const text = decodeHtml(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(
+        /<\/(?:p|div|li|tr|td|dd|dt|section|article|h1|h2|h3|h4|h5|h6)>/gi,
+        "\n"
+      )
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\r/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n[ \t]+/g, "\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+  );
+
+  const patterns = [
+    /(?:会場|會場|場地|場館|地點|地点|Venue)\s*[：:]\s*([^\n]{2,100})/i,
+    /(?:会場|會場|場地|場館|地點|地点|Venue)\s+([^\n]{2,100})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    const venue = normalizeVenueCandidate(match?.[1], city);
+    if (venue) {
+      return venue;
+    }
+  }
+
+  return null;
+}
+
+async function resolveVenueFromSource(
+  sourceUrl: string,
+  city: string | null
+) {
+  if (!sourceUrl || sourceUrl === SANTORA_URL) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(sourceUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; OtakuLabEventBot/1.0)",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      cache: "no-store",
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const html = await response.text();
+
+    return (
+      venueFromJsonLd(html, city) ??
+      venueFromLabeledText(html, city)
+    );
+  } catch {
+    return null;
+  }
+}
+
 async function fetchHtml(
   url: string
 ) {
@@ -1036,6 +1206,9 @@ function parseSantoraItems(
       city:
         finalCity,
 
+      venue:
+        null,
+
       sessionHint:
         item.sessionHint,
 
@@ -1336,7 +1509,7 @@ export async function GET(
             "events"
           )
           .select(
-            "id"
+            "id, venue"
           )
           .eq(
             "fingerprint",
@@ -1360,6 +1533,32 @@ export async function GET(
 
           existingEvents++;
 
+          if (!existingEvent.venue) {
+            const enrichedVenue =
+              await resolveVenueFromSource(
+                candidate.primarySourceUrl,
+                candidate.city
+              );
+
+            if (enrichedVenue) {
+              const { error: venueUpdateError } =
+                await supabase
+                  .from("events")
+                  .update({
+                    venue: enrichedVenue,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", eventId)
+                  .is("venue", null);
+
+              if (venueUpdateError) {
+                throw new Error(
+                  `venue update: ${venueUpdateError.message}`
+                );
+              }
+            }
+          }
+
           results.push({
             eventId,
 
@@ -1376,6 +1575,12 @@ export async function GET(
               "existing",
           });
         } else {
+          const enrichedVenue =
+            await resolveVenueFromSource(
+              candidate.primarySourceUrl,
+              candidate.city
+            );
+
           const {
             data:
               insertedEvent,
@@ -1406,7 +1611,7 @@ export async function GET(
                 candidate.city,
 
               venue:
-                null,
+                enrichedVenue,
 
               event_date:
                 candidate.eventDate,
@@ -1521,6 +1726,9 @@ export async function GET(
 
                 city:
                   candidate.city,
+
+                venueSourceUrl:
+                  candidate.primarySourceUrl,
 
                 sessionHint:
                   candidate.sessionHint,
