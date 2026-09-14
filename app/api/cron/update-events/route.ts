@@ -1159,19 +1159,32 @@ export async function GET(
     }
 
     const authorization =
-      request.headers.get(
-        "authorization"
-      );
+      request.headers.get("authorization");
 
     if (
       authorization !==
       `Bearer ${CRON_SECRET}`
     ) {
+      /*
+       * 安全診斷：
+       * 不回傳 CRON_SECRET，也不回傳 Authorization 實際內容。
+       * 只確認 Vercel 目前有沒有讀到環境變數，以及這次請求是否有帶 Bearer Header。
+       *
+       * 注意：不因 User-Agent 或其他可偽造 Header 放行。
+       * 正式排程仍必須通過 CRON_SECRET。
+       */
       return NextResponse.json(
         {
           ok: false,
-          error:
-            "Unauthorized",
+          error: "Unauthorized",
+          diagnostic: {
+            cronSecretExists: Boolean(CRON_SECRET),
+            authorizationHeaderExists: Boolean(authorization),
+            authorizationStartsWithBearer:
+              authorization?.startsWith("Bearer ") ?? false,
+            userAgentIsVercelCron:
+              request.headers.get("user-agent") === "vercel-cron/1.0",
+          },
         },
         {
           status: 401,
