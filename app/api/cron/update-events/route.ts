@@ -30,28 +30,6 @@ const SOURCES = [
   },
 ];
 
-const EVENT_KEYWORDS = [
-  "演唱會",
-  "音樂會",
-  "交響",
-  "Concert",
-  "concert",
-  "LIVE",
-  "Live",
-  "live",
-  "活動",
-  "展覽",
-  "快閃",
-  "期間限定",
-  "聯名",
-  "主題店",
-  "主題咖啡",
-  "コンサート",
-  "ライブ",
-  "イベント",
-  "コラボ",
-];
-
 type TrackedIp = {
   id: number;
   name: string;
@@ -60,85 +38,48 @@ type TrackedIp = {
   sort_order: number;
 };
 
-type LinkItem = {
-  title: string;
-  url: string;
-};
-
-type MatchedCandidate = {
-  title: string;
-  url: string;
+type ContextMatch = {
   matchedIp: string;
   matchedAlias: string;
+  context: string;
 };
 
 function decodeHtml(text: string) {
   return text
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#8211;/gi, "–")
+    .replace(/&#8212;/gi, "—")
+    .replace(/&#8216;/gi, "‘")
+    .replace(/&#8217;/gi, "’")
+    .replace(/&#8220;/gi, "“")
+    .replace(/&#8221;/gi, "”")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, number) =>
+      String.fromCharCode(Number(number))
+    );
 }
 
-function stripTags(html: string) {
+function htmlToText(html: string) {
   return decodeHtml(
     html
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|section|article)>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/\r/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n[ \t]+/g, "\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
       .trim()
   );
-}
-
-function toAbsoluteUrl(href: string, baseUrl: string) {
-  try {
-    return new URL(href, baseUrl).toString();
-  } catch {
-    return null;
-  }
-}
-
-function extractLinks(html: string, baseUrl: string): LinkItem[] {
-  const results: LinkItem[] = [];
-
-  const anchorRegex =
-    /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-  let match;
-
-  while ((match = anchorRegex.exec(html)) !== null) {
-    const href = match[1];
-    const innerHtml = match[2];
-
-    const title = stripTags(innerHtml);
-    const absoluteUrl = toAbsoluteUrl(href, baseUrl);
-
-    if (!title || !absoluteUrl) {
-      continue;
-    }
-
-    results.push({
-      title,
-      url: absoluteUrl,
-    });
-  }
-
-  return results;
-}
-
-function looksLikeEvent(title: string) {
-  const lowerTitle = title.toLowerCase();
-
-  return EVENT_KEYWORDS.some((keyword) =>
-    lowerTitle.includes(keyword.toLowerCase())
-  );
-}
-
-function escapeRegExp(text: string) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalizeText(text: string) {
@@ -149,72 +90,128 @@ function normalizeText(text: string) {
     .trim();
 }
 
-/*
- * 短縮寫不能直接 includes。
- *
- * 例如：
- * FF
- * EVA
- * ZZZ
- * NTE
- * WOW
- *
- * 需要完整單字邊界，避免：
- * OFFICIAL → FF
- * SHOWCASE → WOW
- * 之類的誤判。
- */
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function isShortLatinAlias(alias: string) {
   return /^[a-z0-9]+$/i.test(alias) && alias.length <= 4;
 }
 
-function aliasMatches(text: string, alias: string) {
+function findAliasPositions(text: string, alias: string) {
+  const positions: number[] = [];
+
   const normalizedText = normalizeText(text);
   const normalizedAlias = normalizeText(alias);
 
   if (!normalizedAlias) {
-    return false;
+    return positions;
   }
 
   if (isShortLatinAlias(normalizedAlias)) {
     const pattern = new RegExp(
-      `(^|[^a-z0-9])${escapeRegExp(normalizedAlias)}([^a-z0-9]|$)`,
-      "i"
+      `(^|[^a-z0-9])(${escapeRegExp(normalizedAlias)})(?=[^a-z0-9]|$)`,
+      "gi"
     );
 
-    return pattern.test(normalizedText);
+    let match;
+
+    while ((match = pattern.exec(normalizedText)) !== null) {
+      const prefixLength = match[1]?.length ?? 0;
+      positions.push(match.index + prefixLength);
+
+      if (match.index === pattern.lastIndex) {
+        pattern.lastIndex++;
+      }
+    }
+
+    return positions;
   }
 
-  return normalizedText.includes(normalizedAlias);
+  let startIndex = 0;
+
+  while (true) {
+    const index = normalizedText.indexOf(
+      normalizedAlias,
+      startIndex
+    );
+
+    if (index === -1) {
+      break;
+    }
+
+    positions.push(index);
+    startIndex = index + normalizedAlias.length;
+  }
+
+  return positions;
 }
 
-function findTrackedIpMatch(
+function createContext(
+  text: string,
+  position: number,
+  aliasLength: number
+) {
+  const radius = 350;
+
+  const start = Math.max(0, position - radius);
+  const end = Math.min(
+    text.length,
+    position + aliasLength + radius
+  );
+
+  return text
+    .slice(start, end)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function scanTrackedIps(
   text: string,
   trackedIps: TrackedIp[]
-): {
-  matchedIp: string;
-  matchedAlias: string;
-} | null {
-  /*
-   * 優先比對較長 alias。
-   * 避免短名稱先命中造成分類不精確。
-   */
+): ContextMatch[] {
+  const normalizedFullText = normalizeText(text);
+
+  const matches: ContextMatch[] = [];
+  const unique = new Set<string>();
+
   for (const ip of trackedIps) {
     const aliases = Array.from(
       new Set([ip.name, ...(ip.aliases ?? [])])
     ).sort((a, b) => b.length - a.length);
 
     for (const alias of aliases) {
-      if (aliasMatches(text, alias)) {
-        return {
+      const positions = findAliasPositions(
+        normalizedFullText,
+        alias
+      );
+
+      for (const position of positions.slice(0, 5)) {
+        const context = createContext(
+          normalizedFullText,
+          position,
+          normalizeText(alias).length
+        );
+
+        const key =
+          `${ip.name}|${alias}|${context}`;
+
+        if (unique.has(key)) {
+          continue;
+        }
+
+        unique.add(key);
+
+        matches.push({
           matchedIp: ip.name,
           matchedAlias: alias,
-        };
+          context,
+        });
       }
     }
   }
 
-  return null;
+  return matches.slice(0, 100);
 }
 
 async function fetchHtml(url: string) {
@@ -240,9 +237,7 @@ export async function GET() {
   try {
     /*
      * STEP 1
-     * 從 Supabase 讀取啟用中的監測 IP。
-     *
-     * 目前只 SELECT，不會寫資料。
+     * 讀取目前啟用中的監測 IP。
      */
     const {
       data: trackedIpRows,
@@ -272,16 +267,18 @@ export async function GET() {
       );
     }
 
-    const trackedIps = (trackedIpRows ?? []) as TrackedIp[];
+    const trackedIps =
+      (trackedIpRows ?? []) as TrackedIp[];
 
     /*
      * STEP 2
-     * 確認目前三個來源能否正常取得。
+     * 確認三個來源目前仍可連線。
      */
     const sourceChecks = await Promise.all(
       SOURCES.map(async (source) => {
         try {
-          const { response, html } = await fetchHtml(source.url);
+          const { response, html } =
+            await fetchHtml(source.url);
 
           return {
             name: source.name,
@@ -310,18 +307,10 @@ export async function GET() {
 
     /*
      * STEP 3
-     * 目前只正式分析 Santora。
+     * 把 Santora HTML 轉成正文文字。
      *
-     * 流程：
-     * HTML
-     * ↓
-     * 所有連結
-     * ↓
-     * 活動關鍵字
-     * ↓
-     * tracked_ips aliases
-     * ↓
-     * 只留下有命中 IP 的候選
+     * 目前目的不是建立活動，
+     * 而是觀察監測 IP 在正文附近的資料結構。
      */
     const santora = SOURCES[0];
 
@@ -330,104 +319,72 @@ export async function GET() {
       html: santoraHtml,
     } = await fetchHtml(santora.url);
 
-    let rawEventCandidates: LinkItem[] = [];
-    let matchedCandidates: MatchedCandidate[] = [];
-
-    if (santoraResponse.ok) {
-      const allLinks = extractLinks(
-        santoraHtml,
-        santora.url
+    if (!santoraResponse.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          stage: "fetch_santora",
+          status: santoraResponse.status,
+        },
+        {
+          status: 502,
+        }
       );
-
-      const rawUniqueMap = new Map<
-        string,
-        LinkItem
-      >();
-
-      for (const item of allLinks) {
-        if (!looksLikeEvent(item.title)) {
-          continue;
-        }
-
-        const key = `${item.title}|${item.url}`;
-
-        if (!rawUniqueMap.has(key)) {
-          rawUniqueMap.set(key, item);
-        }
-      }
-
-      rawEventCandidates = Array.from(
-        rawUniqueMap.values()
-      );
-
-      const matchedUniqueMap = new Map<
-        string,
-        MatchedCandidate
-      >();
-
-      for (const item of rawEventCandidates) {
-        const match = findTrackedIpMatch(
-          item.title,
-          trackedIps
-        );
-
-        if (!match) {
-          continue;
-        }
-
-        const candidate: MatchedCandidate = {
-          title: item.title,
-          url: item.url,
-          matchedIp: match.matchedIp,
-          matchedAlias: match.matchedAlias,
-        };
-
-        const key =
-          `${candidate.matchedIp}|` +
-          `${candidate.title}|` +
-          `${candidate.url}`;
-
-        if (!matchedUniqueMap.has(key)) {
-          matchedUniqueMap.set(
-            key,
-            candidate
-          );
-        }
-      }
-
-      matchedCandidates = Array.from(
-        matchedUniqueMap.values()
-      ).slice(0, 50);
     }
+
+    const santoraText =
+      htmlToText(santoraHtml);
+
+    /*
+     * STEP 4
+     * 掃描正文中所有 tracked_ips aliases。
+     */
+    const contextMatches =
+      scanTrackedIps(
+        santoraText,
+        trackedIps
+      );
+
+    /*
+     * STEP 5
+     * 統計哪些 IP 有被 Santora 正文提到。
+     */
+    const matchedIpSummary = Array.from(
+      new Set(
+        contextMatches.map(
+          (item) => item.matchedIp
+        )
+      )
+    );
 
     return NextResponse.json({
       ok: true,
 
       message:
-        "OTAKU LAB tracked IP parser preview completed. No database writes were performed.",
+        "OTAKU LAB Santora body scan completed. No database writes were performed.",
 
       checkedAt: new Date().toISOString(),
 
       trackedIps: {
         count: trackedIps.length,
-        items: trackedIps.map((ip) => ({
-          name: ip.name,
-          aliases: ip.aliases,
-        })),
       },
 
       sourceChecks,
 
-      parserPreview: {
-        source: "Santora",
+      santoraBodyScan: {
+        textLength: santoraText.length,
 
-        rawEventCandidateCount:
-          rawEventCandidates.length,
+        matchedIpCount:
+          matchedIpSummary.length,
 
-        matchedCandidateCount:
-          matchedCandidates.length,
+        matchedIps:
+          matchedIpSummary,
 
-        matchedCandidates,
+        contextMatchCount:
+          contextMatches.length,
+
+        matches:
+          contextMatches,
       },
     });
   } catch (error) {
